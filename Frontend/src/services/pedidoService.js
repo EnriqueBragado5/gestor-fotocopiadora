@@ -31,3 +31,8 @@ export async function cancelarPedido(id) {
   const respuesta = await api.put(`/pedidos/${id}/cancelar`);
   return respuesta.data;
 }
+
+export async function marcarNoRetirado(id) {
+  const respuesta = await api.put(`/deudas/pedidos/${id}/no-retirado`);
+  return respuesta.data;
+}

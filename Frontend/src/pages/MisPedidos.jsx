@@ -41,6 +41,8 @@ function MisPedidos() {
     <div>
       <h2>Mis Pedidos</h2>
       <Link to="/nuevo-pedido">+ Nuevo pedido</Link>
+      {' | '}
+      <Link to="/mis-deudas">Ver mis deudas</Link>
       {pedidos.length === 0 ? (
         <p>Todavía no realizaste ningún pedido.</p>
       ) : (

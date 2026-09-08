@@ -1,25 +1,31 @@
 import { useState, useEffect } from 'react';
-import { obtenerTodosLosPedidos, confirmarPedido, actualizarEstadoPedido, cancelarPedido } from '../services/pedidoService';
+import { obtenerTodosLosPedidos, confirmarPedido, actualizarEstadoPedido, cancelarPedido, marcarNoRetirado } from '../services/pedidoService';
+import { obtenerTodasLasDeudas, marcarDeudaPagada } from '../services/deudaService';
 
 function PanelAdmin() {
   const [pedidos, setPedidos] = useState([]);
+  const [deudas, setDeudas] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
   const [precios, setPrecios] = useState({});
 
-  async function cargarPedidos() {
+  async function cargarDatos() {
     try {
-      const datos = await obtenerTodosLosPedidos();
-      setPedidos(datos);
+      const [datosPedidos, datosDeudas] = await Promise.all([
+        obtenerTodosLosPedidos(),
+        obtenerTodasLasDeudas()
+      ]);
+      setPedidos(datosPedidos);
+      setDeudas(datosDeudas);
     } catch (err) {
-      setError('No se pudieron cargar los pedidos');
+      setError('No se pudieron cargar los datos');
     } finally {
       setCargando(false);
     }
   }
 
   useEffect(() => {
-    cargarPedidos();
+    cargarDatos();
   }, []);
 
   async function manejarConfirmar(id) {
@@ -30,7 +36,7 @@ function PanelAdmin() {
     }
     try {
       await confirmarPedido(id, precio);
-      cargarPedidos();
+      cargarDatos();
     } catch (err) {
       alert('Error al confirmar el pedido');
     }
@@ -39,7 +45,7 @@ function PanelAdmin() {
   async function manejarCambioEstado(id, nuevoEstado) {
     try {
       await actualizarEstadoPedido(id, nuevoEstado);
-      cargarPedidos();
+      cargarDatos();
     } catch (err) {
       alert('Error al actualizar el estado');
     }
@@ -48,18 +54,40 @@ function PanelAdmin() {
   async function manejarCancelar(id) {
     try {
       await cancelarPedido(id);
-      cargarPedidos();
+      cargarDatos();
     } catch (err) {
       alert('Error al cancelar el pedido');
     }
   }
 
-  if (cargando) return <p>Cargando pedidos...</p>;
+  async function manejarNoRetirado(id) {
+    const confirmar = window.confirm('¿Confirmás que este pedido no fue retirado? Se generará una deuda al cliente.');
+    if (!confirmar) return;
+    try {
+      await marcarNoRetirado(id);
+      cargarDatos();
+    } catch (err) {
+      alert('Error al marcar el pedido como no retirado');
+    }
+  }
+
+  async function manejarMarcarPagada(id) {
+    try {
+      await marcarDeudaPagada(id);
+      cargarDatos();
+    } catch (err) {
+      alert('Error al marcar la deuda como pagada');
+    }
+  }
+
+  if (cargando) return <p>Cargando...</p>;
   if (error) return <p style={{ color: 'red' }}>{error}</p>;
 
   return (
     <div>
-      <h2>Panel de Administrador — Todos los pedidos</h2>
+      <h2>Panel de Administrador</h2>
+
+      <h3>Pedidos</h3>
       {pedidos.length === 0 ? (
         <p>No hay pedidos todavía.</p>
       ) : (
@@ -90,12 +118,35 @@ function PanelAdmin() {
               )}
 
               {pedido.estado === 'listo' && (
-                <button onClick={() => manejarCambioEstado(pedido.id_pedido, 'entregado')}>Marcar como entregado</button>
+                <>
+                  <button onClick={() => manejarCambioEstado(pedido.id_pedido, 'entregado')}>Marcar como entregado</button>
+                  <button onClick={() => manejarNoRetirado(pedido.id_pedido)} style={{ marginLeft: '0.5rem' }}>
+                    Marcar como no retirado
+                  </button>
+                </>
               )}
 
               {(pedido.estado === 'pendiente' || pedido.estado === 'confirmado') && (
                 <button onClick={() => manejarCancelar(pedido.id_pedido)} style={{ marginLeft: '0.5rem', color: 'red' }}>
                   Cancelar
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <h3>Deudas</h3>
+      {deudas.length === 0 ? (
+        <p>No hay deudas registradas.</p>
+      ) : (
+        <ul>
+          {deudas.map((deuda) => (
+            <li key={deuda.id_deuda} style={{ marginBottom: '0.5rem' }}>
+              {deuda.nombre} {deuda.apellido} ({deuda.email}) — Pedido #{deuda.id_pedido} — ${deuda.monto} — Estado: <strong>{deuda.estado}</strong>
+              {deuda.estado === 'pendiente' && (
+                <button onClick={() => manejarMarcarPagada(deuda.id_deuda)} style={{ marginLeft: '0.5rem' }}>
+                  Marcar como pagada
                 </button>
               )}
             </li>
