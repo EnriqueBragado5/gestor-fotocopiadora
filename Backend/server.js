@@ -14,6 +14,7 @@ app.use(express.json());
 app.use('/api/usuarios', usuarioRoutes);
 app.use('/api/pedidos', pedidoRoutes);
 app.use('/api/deudas', deudaRoutes);
+app.use('/uploads', express.static('uploads'));
 
 app.get('/', (req, res) => {
   res.send('El servidor de la fotocopiadora está funcionando');

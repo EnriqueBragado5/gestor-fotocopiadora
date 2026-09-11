@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { obtenerTodosLosPedidos, confirmarPedido, actualizarEstadoPedido, cancelarPedido, marcarNoRetirado } from '../services/pedidoService';
 import { obtenerTodasLasDeudas, marcarDeudaPagada } from '../services/deudaService';
+import { formatearEstado, formatearTipoTrabajo, formatearEstadoDeuda, urlArchivo } from '../utils/formato';
 
 function PanelAdmin() {
   const [pedidos, setPedidos] = useState([]);
@@ -98,9 +99,27 @@ function PanelAdmin() {
                 Pedido #{pedido.id_pedido} — Cliente: {pedido.nombre} {pedido.apellido} ({pedido.email})
               </div>
               <div>
-                {pedido.tipo_trabajo} — {pedido.cantidad_copias} copias — Estado: <strong>{pedido.estado}</strong>
+                {formatearTipoTrabajo(pedido.tipo_trabajo)} — {pedido.cantidad_copias} copias — Estado: <strong>{formatearEstado(pedido.estado)}</strong>
                 {pedido.precio && <span> — ${pedido.precio}</span>}
               </div>
+            
+            {pedido.archivos && pedido.archivos.length > 0 && (
+                <div>
+                  Archivos:{' '}
+                  {pedido.archivos.map((archivo) => (
+                    <a
+                      key={archivo.id_archivo}
+                      href={urlArchivo(archivo.ruta_archivo)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ marginRight: '0.5rem' }}
+                    >
+                      {archivo.nombre_archivo}
+                    </a>
+                  ))}
+                </div>
+              )}
+
 
               {pedido.estado === 'pendiente' && (
                 <div>
@@ -143,7 +162,7 @@ function PanelAdmin() {
         <ul>
           {deudas.map((deuda) => (
             <li key={deuda.id_deuda} style={{ marginBottom: '0.5rem' }}>
-              {deuda.nombre} {deuda.apellido} ({deuda.email}) — Pedido #{deuda.id_pedido} — ${deuda.monto} — Estado: <strong>{deuda.estado}</strong>
+              {deuda.nombre} {deuda.apellido} ({deuda.email}) — Pedido #{deuda.id_pedido} — ${deuda.monto} — Estado: <strong>{formatearEstadoDeuda(deuda.estado)}</strong>
               {deuda.estado === 'pendiente' && (
                 <button onClick={() => manejarMarcarPagada(deuda.id_deuda)} style={{ marginLeft: '0.5rem' }}>
                   Marcar como pagada

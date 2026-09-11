@@ -8,4 +8,12 @@ async function crear({ id_pedido, nombre_archivo, ruta_archivo }) {
   return resultado.insertId;
 }
 
-module.exports = { crear };
+async function buscarPorPedido(id_pedido) {
+  const [rows] = await db.query(
+    'SELECT * FROM Archivos_Pedido WHERE id_pedido = ?',
+    [id_pedido]
+  );
+  return rows;
+}
+
+module.exports = { crear, buscarPorPedido };

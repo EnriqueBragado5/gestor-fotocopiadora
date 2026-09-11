@@ -43,7 +43,15 @@ async function misPedidos(req, res) {
   try {
     const id_usuario = req.usuario.id;
     const pedidos = await pedidoModel.buscarPorUsuario(id_usuario);
-    res.json(pedidos);
+
+    const pedidosConArchivos = await Promise.all(
+      pedidos.map(async (pedido) => {
+        const archivos = await archivoModel.buscarPorPedido(pedido.id_pedido);
+        return { ...pedido, archivos };
+      })
+    );
+
+    res.json(pedidosConArchivos);
   } catch (error) {
     console.error(error);
     res.status(500).json({ mensaje: 'Error al obtener los pedidos', error: error.message });
@@ -53,7 +61,15 @@ async function misPedidos(req, res) {
 async function todos(req, res) {
   try {
     const pedidos = await pedidoModel.buscarTodos();
-    res.json(pedidos);
+
+    const pedidosConArchivos = await Promise.all(
+      pedidos.map(async (pedido) => {
+        const archivos = await archivoModel.buscarPorPedido(pedido.id_pedido);
+        return { ...pedido, archivos };
+      })
+    );
+
+    res.json(pedidosConArchivos);
   } catch (error) {
     console.error(error);
     res.status(500).json({ mensaje: 'Error al obtener los pedidos', error: error.message });

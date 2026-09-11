@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { obtenerMisPedidos, cancelarPedido } from '../services/pedidoService';
 import { Link } from 'react-router-dom';
+import { formatearEstado, formatearTipoTrabajo, urlArchivo } from '../utils/formato';
 
 function MisPedidos() {
   const [pedidos, setPedidos] = useState([]);
@@ -49,8 +50,25 @@ function MisPedidos() {
         <ul>
           {pedidos.map((pedido) => (
             <li key={pedido.id_pedido} style={{ marginBottom: '0.75rem' }}>
-              Pedido #{pedido.id_pedido} — {pedido.tipo_trabajo} — {pedido.cantidad_copias} copias — Estado: <strong>{pedido.estado}</strong>
+              Pedido #{pedido.id_pedido} — {formatearTipoTrabajo(pedido.tipo_trabajo)} — {pedido.cantidad_copias} copias — Estado: <strong>{formatearEstado(pedido.estado)}</strong>
               {pedido.precio && <span> — ${pedido.precio}</span>}
+
+              {pedido.archivos && pedido.archivos.length > 0 && (
+                <div>
+                  Archivos:{' '}
+                  {pedido.archivos.map((archivo) => (
+                    <a
+                      key={archivo.id_archivo}
+                      href={urlArchivo(archivo.ruta_archivo)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ marginRight: '0.5rem' }}
+                    >
+                      {archivo.nombre_archivo}
+                    </a>
+                  ))}
+                </div>
+              )}
 
               {(pedido.estado === 'pendiente' || pedido.estado === 'confirmado' || pedido.estado === 'listo') && (
                 <button
