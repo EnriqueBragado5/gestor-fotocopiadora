@@ -25,12 +25,13 @@ async function crear(req, res) {
     });
 
     for (const file of req.files) {
-      await archivoModel.crear({
-        id_pedido,
-        nombre_archivo: file.originalname,
-        ruta_archivo: file.path
-      });
-    }
+  const nombreCorregido = Buffer.from(file.originalname, 'latin1').toString('utf8');
+  await archivoModel.crear({
+    id_pedido,
+    nombre_archivo: nombreCorregido,
+    ruta_archivo: file.path
+  });
+}
 
     res.status(201).json({ mensaje: 'Pedido creado correctamente', id: id_pedido });
   } catch (error) {

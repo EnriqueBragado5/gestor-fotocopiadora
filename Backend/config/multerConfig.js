@@ -11,9 +11,10 @@ const storage = multer.diskStorage({
     cb(null, carpeta);
   },
   filename: (req, file, cb) => {
-    const nombreUnico = `${Date.now()}-${file.originalname}`;
-    cb(null, nombreUnico);
-  }
+  const nombreCorregido = Buffer.from(file.originalname, 'latin1').toString('utf8');
+  const nombreUnico = `${Date.now()}-${nombreCorregido}`;
+  cb(null, nombreUnico);
+}
 });
 
 

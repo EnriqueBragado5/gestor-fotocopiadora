@@ -3,6 +3,20 @@ import { obtenerTodosLosPedidos, confirmarPedido, actualizarEstadoPedido, cancel
 import { obtenerTodasLasDeudas, marcarDeudaPagada } from '../services/deudaService';
 import { formatearEstado, formatearTipoTrabajo, formatearEstadoDeuda, urlArchivo } from '../utils/formato';
 
+const coloresEstado = {
+  pendiente: 'bg-yellow-100 text-yellow-800',
+  confirmado: 'bg-blue-100 text-blue-800',
+  listo: 'bg-green-100 text-green-800',
+  entregado: 'bg-gray-100 text-gray-700',
+  cancelado: 'bg-red-100 text-red-700',
+  no_retirado: 'bg-red-100 text-red-700'
+};
+
+const coloresDeuda = {
+  pendiente: 'bg-red-100 text-red-700',
+  pagada: 'bg-green-100 text-green-800'
+};
+
 function PanelAdmin() {
   const [pedidos, setPedidos] = useState([]);
   const [deudas, setDeudas] = useState([]);
@@ -81,96 +95,125 @@ function PanelAdmin() {
     }
   }
 
-  if (cargando) return <p>Cargando...</p>;
-  if (error) return <p style={{ color: 'red' }}>{error}</p>;
+  if (cargando) return <p className="text-center text-gray-500 mt-8">Cargando...</p>;
+  if (error) return <p className="text-center text-red-600 mt-8">{error}</p>;
+
+  const botonAccion = 'text-sm px-3 py-1.5 rounded-md border border-gray-300 text-gray-700 hover:border-red-600 hover:text-red-600 transition-colors';
+  const botonPrimario = 'text-sm px-3 py-1.5 rounded-md bg-red-600 text-white hover:bg-red-700 transition-colors';
 
   return (
-    <div>
-      <h2>Panel de Administrador</h2>
+    <div className="max-w-4xl mx-auto px-4 py-8">
+      <h2 className="text-xl font-semibold text-gray-800 mb-6">Panel de Administrador</h2>
 
-      <h3>Pedidos</h3>
+      <h3 className="text-lg font-medium text-gray-700 mb-3">Pedidos</h3>
       {pedidos.length === 0 ? (
-        <p>No hay pedidos todavía.</p>
+        <p className="text-gray-500">No hay pedidos todavía.</p>
       ) : (
-        <ul>
+        <div className="space-y-3 mb-10">
           {pedidos.map((pedido) => (
-            <li key={pedido.id_pedido} style={{ marginBottom: '1rem', borderBottom: '1px solid #ddd', paddingBottom: '0.5rem' }}>
-              <div>
-                Pedido #{pedido.id_pedido} — Cliente: {pedido.nombre} {pedido.apellido} ({pedido.email})
-              </div>
-              <div>
-                {formatearTipoTrabajo(pedido.tipo_trabajo)} — {pedido.cantidad_copias} copias — Estado: <strong>{formatearEstado(pedido.estado)}</strong>
-                {pedido.precio && <span> — ${pedido.precio}</span>}
-              </div>
-            
-            {pedido.archivos && pedido.archivos.length > 0 && (
+            <div key={pedido.id_pedido} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+              <div className="flex justify-between items-start">
                 <div>
-                  Archivos:{' '}
+                  <span className="font-medium text-gray-800">Pedido #{pedido.id_pedido}</span>
+                  <span className="text-gray-500 ml-2 text-sm">
+                    {pedido.nombre} {pedido.apellido} ({pedido.email})
+                  </span>
+                </div>
+                <span className={`text-xs font-medium px-2 py-1 rounded-full ${coloresEstado[pedido.estado] || 'bg-gray-100 text-gray-700'}`}>
+                  {formatearEstado(pedido.estado)}
+                </span>
+              </div>
+
+              <p className="text-sm text-gray-600 mt-1">
+                {formatearTipoTrabajo(pedido.tipo_trabajo)} — {pedido.cantidad_copias} copias
+                {pedido.precio && ` — $${pedido.precio}`}
+              </p>
+
+              {pedido.archivos && pedido.archivos.length > 0 && (
+                <div className="text-sm mt-2">
                   {pedido.archivos.map((archivo) => (
                     <a
                       key={archivo.id_archivo}
                       href={urlArchivo(archivo.ruta_archivo)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{ marginRight: '0.5rem' }}
+                      className="text-red-600 hover:underline mr-3"
                     >
-                      {archivo.nombre_archivo}
+                      📄 {archivo.nombre_archivo}
                     </a>
                   ))}
                 </div>
               )}
 
+              <div className="flex flex-wrap gap-2 mt-3">
+                {pedido.estado === 'pendiente' && (
+                  <>
+                    <input
+                      type="number"
+                      placeholder="Precio"
+                      onChange={(e) => setPrecios({ ...precios, [pedido.id_pedido]: e.target.value })}
+                      className="w-24 px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                    />
+                    <button onClick={() => manejarConfirmar(pedido.id_pedido)} className={botonPrimario}>
+                      Confirmar
+                    </button>
+                  </>
+                )}
 
-              {pedido.estado === 'pendiente' && (
-                <div>
-                  <input
-                    type="number"
-                    placeholder="Precio"
-                    onChange={(e) => setPrecios({ ...precios, [pedido.id_pedido]: e.target.value })}
-                  />
-                  <button onClick={() => manejarConfirmar(pedido.id_pedido)}>Confirmar</button>
-                </div>
-              )}
-
-              {pedido.estado === 'confirmado' && (
-                <button onClick={() => manejarCambioEstado(pedido.id_pedido, 'listo')}>Marcar como listo</button>
-              )}
-
-              {pedido.estado === 'listo' && (
-                <>
-                  <button onClick={() => manejarCambioEstado(pedido.id_pedido, 'entregado')}>Marcar como entregado</button>
-                  <button onClick={() => manejarNoRetirado(pedido.id_pedido)} style={{ marginLeft: '0.5rem' }}>
-                    Marcar como no retirado
+                {pedido.estado === 'confirmado' && (
+                  <button onClick={() => manejarCambioEstado(pedido.id_pedido, 'listo')} className={botonAccion}>
+                    Marcar como listo
                   </button>
-                </>
-              )}
+                )}
 
-              {(pedido.estado === 'pendiente' || pedido.estado === 'confirmado') && (
-                <button onClick={() => manejarCancelar(pedido.id_pedido)} style={{ marginLeft: '0.5rem', color: 'red' }}>
-                  Cancelar
-                </button>
-              )}
-            </li>
+                {pedido.estado === 'listo' && (
+                  <>
+                    <button onClick={() => manejarCambioEstado(pedido.id_pedido, 'entregado')} className={botonAccion}>
+                      Marcar como entregado
+                    </button>
+                    <button onClick={() => manejarNoRetirado(pedido.id_pedido)} className={botonAccion}>
+                      Marcar como no retirado
+                    </button>
+                  </>
+                )}
+
+                {(pedido.estado === 'pendiente' || pedido.estado === 'confirmado') && (
+                  <button
+                    onClick={() => manejarCancelar(pedido.id_pedido)}
+                    className="text-sm px-3 py-1.5 rounded-md border border-red-600 text-red-600 hover:bg-red-600 hover:text-white transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                )}
+              </div>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
 
-      <h3>Deudas</h3>
+      <h3 className="text-lg font-medium text-gray-700 mb-3">Deudas</h3>
       {deudas.length === 0 ? (
-        <p>No hay deudas registradas.</p>
+        <p className="text-gray-500">No hay deudas registradas.</p>
       ) : (
-        <ul>
+        <div className="space-y-2">
           {deudas.map((deuda) => (
-            <li key={deuda.id_deuda} style={{ marginBottom: '0.5rem' }}>
-              {deuda.nombre} {deuda.apellido} ({deuda.email}) — Pedido #{deuda.id_pedido} — ${deuda.monto} — Estado: <strong>{formatearEstadoDeuda(deuda.estado)}</strong>
-              {deuda.estado === 'pendiente' && (
-                <button onClick={() => manejarMarcarPagada(deuda.id_deuda)} style={{ marginLeft: '0.5rem' }}>
-                  Marcar como pagada
-                </button>
-              )}
-            </li>
+            <div key={deuda.id_deuda} className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm flex justify-between items-center">
+              <span className="text-sm text-gray-700">
+                {deuda.nombre} {deuda.apellido} ({deuda.email}) — Pedido #{deuda.id_pedido} — <span className="font-medium">${deuda.monto}</span>
+              </span>
+              <div className="flex items-center gap-2">
+                <span className={`text-xs font-medium px-2 py-1 rounded-full ${coloresDeuda[deuda.estado] || 'bg-gray-100 text-gray-700'}`}>
+                  {formatearEstadoDeuda(deuda.estado)}
+                </span>
+                {deuda.estado === 'pendiente' && (
+                  <button onClick={() => manejarMarcarPagada(deuda.id_deuda)} className={botonAccion}>
+                    Marcar como pagada
+                  </button>
+                )}
+              </div>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );

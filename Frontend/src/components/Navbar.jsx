@@ -11,21 +11,36 @@ function Navbar() {
   }
 
   return (
-    <nav style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem', borderBottom: '1px solid #ccc' }}>
-      <Link to="/">Gestor de Fotocopiadora</Link>
+    <nav className="flex justify-between items-center px-6 py-4 bg-white border-b border-gray-200 shadow-sm">
+      <Link to="/" className="text-lg font-semibold text-gray-800">
+        Gestor de <span className="text-red-600">Fotocopiadora</span>
+      </Link>
 
-      <div>
+      <div className="flex items-center gap-4">
         {usuario ? (
           <>
-            <span>Hola, {usuario.nombre} ({usuario.rol})</span>
-            <button onClick={manejarCerrarSesion} style={{ marginLeft: '1rem' }}>
+            <span className="text-sm text-gray-600">
+              Hola, <span className="font-medium text-gray-800">{usuario.nombre}</span>{' '}
+              <span className="text-red-600 text-xs uppercase font-semibold">({usuario.rol})</span>
+            </span>
+            <button
+              onClick={manejarCerrarSesion}
+              className="text-sm px-3 py-1.5 rounded-md border border-red-600 text-red-600 hover:bg-red-600 hover:text-white transition-colors"
+            >
               Cerrar sesión
             </button>
           </>
         ) : (
           <>
-            <Link to="/login">Iniciar sesión</Link>
-            <Link to="/registro" style={{ marginLeft: '1rem' }}>Registrarse</Link>
+            <Link to="/login" className="text-sm text-gray-700 hover:text-red-600 transition-colors">
+              Iniciar sesión
+            </Link>
+            <Link
+              to="/registro"
+              className="text-sm px-3 py-1.5 rounded-md bg-red-600 text-white hover:bg-red-700 transition-colors"
+            >
+              Registrarse
+            </Link>
           </>
         )}
       </div>
