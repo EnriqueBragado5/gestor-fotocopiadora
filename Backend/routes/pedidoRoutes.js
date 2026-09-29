@@ -4,7 +4,19 @@ const pedidoController = require('../controllers/pedidoController');
 const { verificarToken, esAdmin } = require('../middlewares/authMiddleware');
 const upload = require('../config/multerConfig');
 
-router.post('/', verificarToken, upload.array('archivos', 5), pedidoController.crear);
+function manejarSubidaArchivos(req, res, next) {
+  upload.array('archivos', 5)(req, res, (error) => {
+    if (error) {
+      if (error.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ mensaje: 'Uno de los archivos supera el tamaño máximo permitido (25 MB)' });
+      }
+      return res.status(400).json({ mensaje: error.message || 'Error al subir los archivos' });
+    }
+    next();
+  });
+}
+
+router.post('/', verificarToken, manejarSubidaArchivos, pedidoController.crear);
 
 router.get('/mis-pedidos', verificarToken, pedidoController.misPedidos);
 

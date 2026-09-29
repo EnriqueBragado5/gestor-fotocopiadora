@@ -17,7 +17,9 @@ api.interceptors.response.use(
   (respuesta) => respuesta,
   (error) => {
     const status = error.response?.status;
-    if (status === 401 || status === 403) {
+    const esLogin = error.config?.url?.includes('/usuarios/login');
+
+    if ((status === 401 || status === 403) && !esLogin) {
       localStorage.removeItem('token');
       localStorage.removeItem('usuario');
       window.location.href = '/login';
