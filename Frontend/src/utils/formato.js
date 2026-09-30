@@ -43,3 +43,12 @@ export function urlArchivo(rutaArchivo) {
   const rutaLimpia = rutaArchivo.replace(/\\/g, '/');
   return encodeURI(`http://localhost:3000/${rutaLimpia}`);
 }
+
+export function formatearFecha(fechaISO) {
+  const fecha = new Date(fechaISO);
+  return fecha.toLocaleDateString('es-AR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+}

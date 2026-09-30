@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { obtenerMisDeudas } from '../services/deudaService';
+import { formatearFecha } from '../utils/formato';
 
 function MisDeudas() {
   const [deudas, setDeudas] = useState([]);
@@ -34,7 +35,10 @@ function MisDeudas() {
         <div className="space-y-2">
           {deudasPendientes.map((deuda) => (
             <div key={deuda.id_deuda} className="bg-white border border-red-200 rounded-lg p-4 shadow-sm flex justify-between items-center">
-              <span className="text-sm text-gray-700">Pedido #{deuda.id_pedido}</span>
+              <div>
+                <span className="text-sm text-gray-700">Pedido #{deuda.id_pedido}</span>
+                <p className="text-xs text-gray-400 mt-0.5">Desde el {formatearFecha(deuda.fecha)}</p>
+              </div>
               <span className="text-red-600 font-semibold">${deuda.monto}</span>
             </div>
           ))}
