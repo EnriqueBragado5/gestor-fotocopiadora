@@ -73,4 +73,34 @@ async function login(req, res) {
   }
 }
 
-module.exports = { registrar, login };
+async function crearAdmin(req, res) {
+  try {
+    const { nombre, apellido, email, contrasena, telefono } = req.body;
+
+    if (!nombre || !apellido || !email || !contrasena) {
+      return res.status(400).json({ mensaje: 'Faltan datos obligatorios' });
+    }
+
+    const usuarioExistente = await usuarioModel.buscarPorEmail(email);
+    if (usuarioExistente) {
+      return res.status(409).json({ mensaje: 'Ya existe un usuario registrado con ese email' });
+    }
+
+    const contrasenaHasheada = await bcrypt.hash(contrasena, 10);
+
+    const idUsuario = await usuarioModel.crearAdmin({
+      nombre,
+      apellido,
+      email,
+      contrasena: contrasenaHasheada,
+      telefono
+    });
+
+    res.status(201).json({ mensaje: 'Administrador creado correctamente', id: idUsuario });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ mensaje: 'Error al crear el administrador', error: error.message });
+  }
+}
+
+module.exports = { registrar, login, crearAdmin };

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { obtenerTodosLosPedidos, confirmarPedido, actualizarEstadoPedido, cancelarPedido, marcarNoRetirado } from '../services/pedidoService';
 import { obtenerTodasLasDeudas, marcarDeudaPagada } from '../services/deudaService';
 import { formatearEstado, formatearTipoTrabajo, formatearEstadoDeuda, urlArchivo } from '../utils/formato';
+import { crearAdmin } from '../services/usuarioService';
 
 const coloresEstado = {
   pendiente: 'bg-yellow-100 text-yellow-800',
@@ -23,6 +24,10 @@ function PanelAdmin() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
   const [precios, setPrecios] = useState({});
+  const [mostrarFormAdmin, setMostrarFormAdmin] = useState(false);
+  const [formAdmin, setFormAdmin] = useState({ nombre: '', apellido: '', email: '', contrasena: '', telefono: '' });
+  const [errorAdmin, setErrorAdmin] = useState('');
+  const [exitoAdmin, setExitoAdmin] = useState('');
 
   async function cargarDatos() {
     try {
@@ -94,6 +99,24 @@ function PanelAdmin() {
       alert('Error al marcar la deuda como pagada');
     }
   }
+  function manejarCambioFormAdmin(e) {
+  setFormAdmin({ ...formAdmin, [e.target.name]: e.target.value });
+}
+
+  async function manejarCrearAdmin(e) {
+    e.preventDefault();
+    setErrorAdmin('');
+    setExitoAdmin('');
+    try {
+      await crearAdmin(formAdmin);
+      setExitoAdmin('Administrador creado correctamente');
+      setFormAdmin({ nombre: '', apellido: '', email: '', contrasena: '', telefono: '' });
+    } catch (err) {
+      const mensaje = err.response?.data?.mensaje || 'Error al crear el administrador';
+      setErrorAdmin(mensaje);
+    }
+  }
+  
 
   if (cargando) return <p className="text-center text-gray-500 mt-8">Cargando...</p>;
   if (error) return <p className="text-center text-red-600 mt-8">{error}</p>;
@@ -104,6 +127,66 @@ function PanelAdmin() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <h2 className="text-xl font-semibold text-gray-800 mb-6">Panel de Administrador</h2>
+    
+    <div className="mb-8">
+        <button
+          onClick={() => setMostrarFormAdmin(!mostrarFormAdmin)}
+          className="text-sm px-3 py-1.5 rounded-md border border-gray-300 text-gray-700 hover:border-red-600 hover:text-red-600 transition-colors"
+        >
+          {mostrarFormAdmin ? 'Ocultar formulario' : '+ Crear nuevo administrador'}
+        </button>
+
+        {mostrarFormAdmin && (
+          <form onSubmit={manejarCrearAdmin} className="bg-white border border-gray-200 rounded-lg p-4 mt-3 shadow-sm space-y-3 max-w-sm">
+            <input
+              name="nombre"
+              placeholder="Nombre"
+              value={formAdmin.nombre}
+              onChange={manejarCambioFormAdmin}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+            />
+            <input
+              name="apellido"
+              placeholder="Apellido"
+              value={formAdmin.apellido}
+              onChange={manejarCambioFormAdmin}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+            />
+            <input
+              type="email"
+              name="email"
+              placeholder="Email"
+              value={formAdmin.email}
+              onChange={manejarCambioFormAdmin}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+            />
+            <input
+              type="password"
+              name="contrasena"
+              placeholder="Contraseña"
+              value={formAdmin.contrasena}
+              onChange={manejarCambioFormAdmin}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+            />
+            <input
+              name="telefono"
+              placeholder="Teléfono"
+              value={formAdmin.telefono}
+              onChange={manejarCambioFormAdmin}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+            />
+            {errorAdmin && <p className="text-sm text-red-600">{errorAdmin}</p>}
+            {exitoAdmin && <p className="text-sm text-green-600">{exitoAdmin}</p>}
+            <button type="submit" className="w-full bg-red-600 text-white py-2 rounded-md hover:bg-red-700 transition-colors text-sm font-medium">
+              Crear administrador
+            </button>
+          </form>
+        )}
+      </div>
 
       <h3 className="text-lg font-medium text-gray-700 mb-3">Pedidos</h3>
       {pedidos.length === 0 ? (

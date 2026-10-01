@@ -14,4 +14,13 @@ async function crear({ nombre, apellido, email, contrasena, telefono }) {
   return resultado.insertId;
 }
 
-module.exports = { buscarPorEmail, crear };
+async function crearAdmin({ nombre, apellido, email, contrasena, telefono }) {
+  const [resultado] = await db.query(
+    `INSERT INTO Usuarios (nombre, apellido, email, contrasena, rol, telefono)
+     VALUES (?, ?, ?, ?, 'admin', ?)`,
+    [nombre, apellido, email, contrasena, telefono]
+  );
+  return resultado.insertId;
+}
+
+module.exports = { buscarPorEmail, crear, crearAdmin };

@@ -9,3 +9,8 @@ export async function registrar(datosUsuario) {
   const respuesta = await api.post('/usuarios/registro', datosUsuario);
   return respuesta.data;
 }
+
+export async function crearAdmin(datosAdmin) {
+  const respuesta = await api.post('/usuarios/crear-admin', datosAdmin);
+  return respuesta.data;
+}
