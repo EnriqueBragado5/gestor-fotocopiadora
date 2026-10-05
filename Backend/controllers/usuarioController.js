@@ -50,6 +50,10 @@ async function login(req, res) {
       return res.status(401).json({ mensaje: 'Email o contraseña incorrectos' });
     }
 
+    if (!usuario.activo) {
+    return res.status(403).json({ mensaje: 'Esta cuenta se encuentra desactivada' });
+    }
+    
     const token = jwt.sign(
       { id: usuario.id_usuario, rol: usuario.rol },
       process.env.JWT_SECRET,
@@ -103,4 +107,54 @@ async function crearAdmin(req, res) {
   }
 }
 
-module.exports = { registrar, login, crearAdmin };
+async function listarAdmins(req, res) {
+  try {
+    const admins = await usuarioModel.listarAdmins();
+    res.json(admins);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ mensaje: 'Error al obtener los administradores', error: error.message });
+  }
+}
+
+async function actualizarAdmin(req, res) {
+  try {
+    const { id } = req.params;
+    const { nombre, apellido, telefono } = req.body;
+
+    const usuario = await usuarioModel.buscarPorId(id);
+    if (!usuario || usuario.rol !== 'admin') {
+      return res.status(404).json({ mensaje: 'Administrador no encontrado' });
+    }
+
+    await usuarioModel.actualizar(id, { nombre, apellido, telefono });
+    res.json({ mensaje: 'Administrador actualizado correctamente' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ mensaje: 'Error al actualizar el administrador', error: error.message });
+  }
+}
+
+async function cambiarEstadoAdmin(req, res) {
+  try {
+    const { id } = req.params;
+    const { activo } = req.body;
+
+    const usuario = await usuarioModel.buscarPorId(id);
+    if (!usuario || usuario.rol !== 'admin') {
+      return res.status(404).json({ mensaje: 'Administrador no encontrado' });
+    }
+
+    if (Number(id) === req.usuario.id) {
+      return res.status(400).json({ mensaje: 'No podés desactivar tu propia cuenta' });
+    }
+
+    await usuarioModel.cambiarEstadoActivo(id, activo);
+    res.json({ mensaje: activo ? 'Administrador reactivado' : 'Administrador desactivado' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ mensaje: 'Error al cambiar el estado del administrador', error: error.message });
+  }
+}
+
+module.exports = { registrar, login, crearAdmin, listarAdmins, actualizarAdmin, cambiarEstadoAdmin };
