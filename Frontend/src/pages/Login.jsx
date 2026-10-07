@@ -18,7 +18,8 @@ function Login() {
       iniciarSesion(datos);
       navigate('/');
     } catch (err) {
-      setError('Email o contraseña incorrectos');
+      const mensaje = err.response?.data?.mensaje || 'Email o contraseña incorrectos';
+      setError(mensaje);
     }
   }
 

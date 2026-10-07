@@ -14,3 +14,18 @@ export async function crearAdmin(datosAdmin) {
   const respuesta = await api.post('/usuarios/crear-admin', datosAdmin);
   return respuesta.data;
 }
+
+export async function obtenerAdmins() {
+  const respuesta = await api.get('/usuarios/admins');
+  return respuesta.data;
+}
+
+export async function actualizarAdmin(id, datos) {
+  const respuesta = await api.put(`/usuarios/admins/${id}`, datos);
+  return respuesta.data;
+}
+
+export async function cambiarEstadoAdmin(id, activo) {
+  const respuesta = await api.put(`/usuarios/admins/${id}/estado`, { activo });
+  return respuesta.data;
+}

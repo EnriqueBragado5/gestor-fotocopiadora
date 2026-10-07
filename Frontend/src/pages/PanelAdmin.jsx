@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { obtenerTodosLosPedidos, confirmarPedido, actualizarEstadoPedido, cancelarPedido, marcarNoRetirado } from '../services/pedidoService';
 import { obtenerTodasLasDeudas, marcarDeudaPagada } from '../services/deudaService';
 import { formatearEstado, formatearTipoTrabajo, formatearEstadoDeuda, urlArchivo } from '../utils/formato';
-import { crearAdmin } from '../services/usuarioService';
+import { crearAdmin, obtenerAdmins, actualizarAdmin, cambiarEstadoAdmin } from '../services/usuarioService';
+import { useAuth } from '../context/AuthContext';
 
 const coloresEstado = {
   pendiente: 'bg-yellow-100 text-yellow-800',
@@ -28,21 +29,27 @@ function PanelAdmin() {
   const [formAdmin, setFormAdmin] = useState({ nombre: '', apellido: '', email: '', contrasena: '', telefono: '' });
   const [errorAdmin, setErrorAdmin] = useState('');
   const [exitoAdmin, setExitoAdmin] = useState('');
-
+  const { usuario } = useAuth();
+  const [admins, setAdmins] = useState([]);
+  const [editandoId, setEditandoId] = useState(null);
+  const [formEdicion, setFormEdicion] = useState({ nombre: '', apellido: '', telefono: '' });
+  
   async function cargarDatos() {
-    try {
-      const [datosPedidos, datosDeudas] = await Promise.all([
-        obtenerTodosLosPedidos(),
-        obtenerTodasLasDeudas()
-      ]);
-      setPedidos(datosPedidos);
-      setDeudas(datosDeudas);
-    } catch (err) {
-      setError('No se pudieron cargar los datos');
-    } finally {
-      setCargando(false);
-    }
+  try {
+    const [datosPedidos, datosDeudas, datosAdmins] = await Promise.all([
+      obtenerTodosLosPedidos(),
+      obtenerTodasLasDeudas(),
+      obtenerAdmins()
+    ]);
+    setPedidos(datosPedidos);
+    setDeudas(datosDeudas);
+    setAdmins(datosAdmins);
+  } catch (err) {
+    setError('No se pudieron cargar los datos');
+  } finally {
+    setCargando(false);
   }
+}
 
   useEffect(() => {
     cargarDatos();
@@ -104,19 +111,52 @@ function PanelAdmin() {
 }
 
   async function manejarCrearAdmin(e) {
-    e.preventDefault();
-    setErrorAdmin('');
-    setExitoAdmin('');
-    try {
-      await crearAdmin(formAdmin);
-      setExitoAdmin('Administrador creado correctamente');
-      setFormAdmin({ nombre: '', apellido: '', email: '', contrasena: '', telefono: '' });
-    } catch (err) {
-      const mensaje = err.response?.data?.mensaje || 'Error al crear el administrador';
-      setErrorAdmin(mensaje);
-    }
+  e.preventDefault();
+  setErrorAdmin('');
+  setExitoAdmin('');
+  try {
+    await crearAdmin(formAdmin);
+    setExitoAdmin('Administrador creado correctamente');
+    setFormAdmin({ nombre: '', apellido: '', email: '', contrasena: '', telefono: '' });
+    cargarDatos();
+  } catch (err) {
+    const mensaje = err.response?.data?.mensaje || 'Error al crear el administrador';
+    setErrorAdmin(mensaje);
   }
+}
   
+  function iniciarEdicion(admin) {
+  setEditandoId(admin.id_usuario);
+  setFormEdicion({ nombre: admin.nombre, apellido: admin.apellido, telefono: admin.telefono || '' });
+}
+
+function cancelarEdicion() {
+  setEditandoId(null);
+}
+
+async function guardarEdicion(id) {
+  try {
+    await actualizarAdmin(id, formEdicion);
+    setEditandoId(null);
+    cargarDatos();
+  } catch (err) {
+    alert('Error al actualizar el administrador');
+  }
+}
+
+async function manejarCambiarEstado(id, estadoActual) {
+  const accion = estadoActual ? 'desactivar' : 'reactivar';
+  const confirmar = window.confirm(`¿Confirmás que querés ${accion} este administrador?`);
+  if (!confirmar) return;
+  try {
+    await cambiarEstadoAdmin(id, !estadoActual);
+    cargarDatos();
+  } catch (err) {
+    const mensaje = err.response?.data?.mensaje || `Error al ${accion} el administrador`;
+    alert(mensaje);
+  }
+}
+
 
   if (cargando) return <p className="text-center text-gray-500 mt-8">Cargando...</p>;
   if (error) return <p className="text-center text-red-600 mt-8">{error}</p>;
@@ -187,6 +227,74 @@ function PanelAdmin() {
           </form>
         )}
       </div>
+
+        {admins.length > 0 && (
+          <div className="mb-10">
+            <h3 className="text-lg font-medium text-gray-700 mb-3">Administradores</h3>
+            <div className="space-y-2">
+              {admins.map((admin) => (
+                <div key={admin.id_usuario} className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
+                  {editandoId === admin.id_usuario ? (
+                    <div className="space-y-2">
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          value={formEdicion.nombre}
+                          onChange={(e) => setFormEdicion({ ...formEdicion, nombre: e.target.value })}
+                          className="px-2 py-1 border border-gray-300 rounded-md text-sm"
+                          placeholder="Nombre"
+                        />
+                        <input
+                          value={formEdicion.apellido}
+                          onChange={(e) => setFormEdicion({ ...formEdicion, apellido: e.target.value })}
+                          className="px-2 py-1 border border-gray-300 rounded-md text-sm"
+                          placeholder="Apellido"
+                        />
+                      </div>
+                      <input
+                        value={formEdicion.telefono}
+                        onChange={(e) => setFormEdicion({ ...formEdicion, telefono: e.target.value })}
+                        className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm"
+                        placeholder="Teléfono"
+                      />
+                      <div className="flex gap-2">
+                        <button onClick={() => guardarEdicion(admin.id_usuario)} className={botonPrimario}>
+                          Guardar
+                        </button>
+                        <button onClick={cancelarEdicion} className={botonAccion}>
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <span className="font-medium text-gray-800">{admin.nombre} {admin.apellido}</span>
+                        <span className="text-sm text-gray-500 ml-2">{admin.email}</span>
+                        <span className={`ml-2 text-xs font-medium px-2 py-0.5 rounded-full ${admin.activo ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-600'}`}>
+                          {admin.activo ? 'Activo' : 'Desactivado'}
+                        </span>
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={() => iniciarEdicion(admin)} className={botonAccion}>
+                          Editar
+                        </button>
+                        {admin.id_usuario !== usuario.id && (
+                          <button
+                            onClick={() => manejarCambiarEstado(admin.id_usuario, admin.activo)}
+                            className="text-sm px-3 py-1.5 rounded-md border border-red-600 text-red-600 hover:bg-red-600 hover:text-white transition-colors"
+                          >
+                            {admin.activo ? 'Desactivar' : 'Reactivar'}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
 
       <h3 className="text-lg font-medium text-gray-700 mb-3">Pedidos</h3>
       {pedidos.length === 0 ? (

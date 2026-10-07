@@ -30,4 +30,12 @@ async function marcarComoPagada(id_deuda) {
   await db.query(`UPDATE Deudas SET estado = 'pagada' WHERE id_deuda = ?`, [id_deuda]);
 }
 
-module.exports = { crear, buscarTodas, buscarPorUsuario, marcarComoPagada };
+async function sumarDeudaPendiente(id_usuario) {
+  const [rows] = await db.query(
+    `SELECT COALESCE(SUM(monto), 0) AS total FROM Deudas WHERE id_usuario = ? AND estado = 'pendiente'`,
+    [id_usuario]
+  );
+  return rows[0].total;
+}
+
+module.exports = { crear, buscarTodas, buscarPorUsuario, marcarComoPagada, sumarDeudaPendiente };

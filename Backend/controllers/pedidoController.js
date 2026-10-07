@@ -1,5 +1,7 @@
 const pedidoModel = require('../models/pedidoModel');
 const archivoModel = require('../models/archivoModel');
+const configuracionModel = require('../models/configuracionModel');
+const deudaModel = require('../models/deudaModel');
 
 async function crear(req, res) {
   try {
@@ -12,6 +14,14 @@ async function crear(req, res) {
 
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ mensaje: 'Debe adjuntar al menos un archivo PDF' });
+    }
+    const deudaActual = await deudaModel.sumarDeudaPendiente(id_usuario);
+    const limite = await configuracionModel.obtenerLimiteDeuda();
+
+    if (Number(deudaActual) >= Number(limite)) {
+      return res.status(403).json({
+        mensaje: `No podés realizar nuevos pedidos porque tu deuda pendiente ($${deudaActual}) alcanzó el límite permitido ($${limite}). Por favor, regularizá tu situación.`
+      });
     }
 
     const id_pedido = await pedidoModel.crear({
