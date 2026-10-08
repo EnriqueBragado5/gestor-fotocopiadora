@@ -19,7 +19,7 @@ async function crear(req, res) {
     const limite = await configuracionModel.obtenerLimiteDeuda();
 
     if (Number(deudaActual) >= Number(limite)) {
-      return res.status(403).json({
+      return res.status(409).json({
         mensaje: `No podés realizar nuevos pedidos porque tu deuda pendiente ($${deudaActual}) alcanzó el límite permitido ($${limite}). Por favor, regularizá tu situación.`
       });
     }

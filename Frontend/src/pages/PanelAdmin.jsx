@@ -4,6 +4,7 @@ import { obtenerTodasLasDeudas, marcarDeudaPagada } from '../services/deudaServi
 import { formatearEstado, formatearTipoTrabajo, formatearEstadoDeuda, urlArchivo } from '../utils/formato';
 import { crearAdmin, obtenerAdmins, actualizarAdmin, cambiarEstadoAdmin } from '../services/usuarioService';
 import { useAuth } from '../context/AuthContext';
+import { obtenerLimite, actualizarLimite } from '../services/configuracionService';
 
 const coloresEstado = {
   pendiente: 'bg-yellow-100 text-yellow-800',
@@ -33,17 +34,21 @@ function PanelAdmin() {
   const [admins, setAdmins] = useState([]);
   const [editandoId, setEditandoId] = useState(null);
   const [formEdicion, setFormEdicion] = useState({ nombre: '', apellido: '', telefono: '' });
+  const [limiteInput, setLimiteInput] = useState('');
+  const [mensajeLimite, setMensajeLimite] = useState('');
   
   async function cargarDatos() {
   try {
-    const [datosPedidos, datosDeudas, datosAdmins] = await Promise.all([
+    const [datosPedidos, datosDeudas, datosAdmins, datosLimite] = await Promise.all([
       obtenerTodosLosPedidos(),
       obtenerTodasLasDeudas(),
-      obtenerAdmins()
+      obtenerAdmins(),
+      obtenerLimite()
     ]);
     setPedidos(datosPedidos);
     setDeudas(datosDeudas);
     setAdmins(datosAdmins);
+    setLimiteInput(datosLimite.limite_deuda);
   } catch (err) {
     setError('No se pudieron cargar los datos');
   } finally {
@@ -158,6 +163,18 @@ async function manejarCambiarEstado(id, estadoActual) {
 }
 
 
+async function manejarGuardarLimite(e) {
+  e.preventDefault();
+  setMensajeLimite('');
+  try {
+    await actualizarLimite(limiteInput);
+    setMensajeLimite('Límite actualizado correctamente');
+    cargarDatos();
+  } catch (err) {
+    setMensajeLimite(err.response?.data?.mensaje || 'Error al actualizar el límite');
+  }
+}
+
   if (cargando) return <p className="text-center text-gray-500 mt-8">Cargando...</p>;
   if (error) return <p className="text-center text-red-600 mt-8">{error}</p>;
 
@@ -227,6 +244,24 @@ async function manejarCambiarEstado(id, estadoActual) {
           </form>
         )}
       </div>
+
+        <div className="mb-8">
+        <h3 className="text-lg font-medium text-gray-700 mb-3">Límite de deuda por cliente</h3>
+        <form onSubmit={manejarGuardarLimite} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm flex flex-wrap items-center gap-3 max-w-md">
+          <span className="text-sm text-gray-600">Bloquear nuevos pedidos desde $</span>
+          <input
+            type="number"
+            min="0"
+            value={limiteInput}
+            onChange={(e) => setLimiteInput(e.target.value)}
+            required
+            className="w-28 px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+          />
+          <button type="submit" className={botonPrimario}>Guardar</button>
+          {mensajeLimite && <p className="w-full text-sm text-gray-600">{mensajeLimite}</p>}
+        </form>
+      </div>
+
 
         {admins.length > 0 && (
           <div className="mb-10">
