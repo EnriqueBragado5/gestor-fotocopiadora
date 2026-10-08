@@ -92,8 +92,9 @@ async function confirmar(req, res) {
     const { id } = req.params;
     const { precio } = req.body;
 
-    if (!precio) {
-      return res.status(400).json({ mensaje: 'Debe indicar un precio para confirmar el pedido' });
+
+    if (!precio || Number(precio) <= 0) {
+      return res.status(400).json({ mensaje: 'Debe poner un número mayor a 0' });
     }
 
     const pedido = await pedidoModel.buscarPorId(id);

@@ -36,6 +36,7 @@ function PanelAdmin() {
   const [formEdicion, setFormEdicion] = useState({ nombre: '', apellido: '', telefono: '' });
   const [limiteInput, setLimiteInput] = useState('');
   const [mensajeLimite, setMensajeLimite] = useState('');
+  const [pestana, setPestana] = useState('pedidos');
   
   async function cargarDatos() {
   try {
@@ -62,8 +63,8 @@ function PanelAdmin() {
 
   async function manejarConfirmar(id) {
     const precio = precios[id];
-    if (!precio) {
-      alert('Ingresá un precio antes de confirmar');
+    if (!precio || Number(precio) <= 0) {
+      alert('Ingresá un precio mayor a 0 antes de confirmar');
       return;
     }
     try {
@@ -181,11 +182,155 @@ async function manejarGuardarLimite(e) {
   const botonAccion = 'text-sm px-3 py-1.5 rounded-md border border-gray-300 text-gray-700 hover:border-red-600 hover:text-red-600 transition-colors';
   const botonPrimario = 'text-sm px-3 py-1.5 rounded-md bg-red-600 text-white hover:bg-red-700 transition-colors';
 
+  const pestanas = [
+  { id: 'pedidos', nombre: 'Pedidos' },
+  { id: 'deudas', nombre: 'Deudas' },
+  { id: 'administradores', nombre: 'Administradores' },
+  { id: 'configuracion', nombre: 'Configuración' }
+  ];
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <h2 className="text-xl font-semibold text-gray-800 mb-6">Panel de Administrador</h2>
     
-    <div className="mb-8">
+    <div className="flex gap-1 border-b border-gray-200 mb-6">
+      {pestanas.map((p) => (
+        <button
+          key={p.id}
+          onClick={() => setPestana(p.id)}
+          className={`px-4 py-2 text-sm font-medium -mb-px border-b-2 transition-colors ${
+            pestana === p.id
+              ? 'border-red-600 text-red-600'
+              : 'border-transparent text-gray-500 hover:text-gray-800'
+          }`}
+        >
+          {p.nombre}
+        </button>
+      ))}
+    </div>
+{pestana === 'pedidos' && (
+      <>
+        <h3 className="text-lg font-medium text-gray-700 mb-3">Pedidos</h3>
+      {pedidos.length === 0 ? (
+        <p className="text-gray-500">No hay pedidos todavía.</p>
+      ) : (
+        <div className="space-y-3 mb-10">
+          {pedidos.map((pedido) => (
+            <div key={pedido.id_pedido} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+              <div className="flex justify-between items-start">
+                <div>
+                  <span className="font-medium text-gray-800">Pedido #{pedido.id_pedido}</span>
+                  <span className="text-gray-500 ml-2 text-sm">
+                    {pedido.nombre} {pedido.apellido} ({pedido.email})
+                  </span>
+                </div>
+                <span className={`text-xs font-medium px-2 py-1 rounded-full ${coloresEstado[pedido.estado] || 'bg-gray-100 text-gray-700'}`}>
+                  {formatearEstado(pedido.estado)}
+                </span>
+              </div>
+
+              <p className="text-sm text-gray-600 mt-1">
+                {formatearTipoTrabajo(pedido.tipo_trabajo)} — {pedido.cantidad_copias} copias
+                {pedido.precio && ` — $${pedido.precio}`}
+              </p>
+
+              {pedido.archivos && pedido.archivos.length > 0 && (
+                <div className="text-sm mt-2">
+                  {pedido.archivos.map((archivo) => (
+                    <a
+                      key={archivo.id_archivo}
+                      href={urlArchivo(archivo.ruta_archivo)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-red-600 hover:underline mr-3"
+                    >
+                      📄 {archivo.nombre_archivo}
+                    </a>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex flex-wrap gap-2 mt-3">
+                {pedido.estado === 'pendiente' && (
+                  <>
+                    <input
+                      type="number"
+                      min = "1"
+                      placeholder="Precio"
+                      onChange={(e) => setPrecios({ ...precios, [pedido.id_pedido]: e.target.value })}
+                      className="w-24 px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                    />
+                    <button onClick={() => manejarConfirmar(pedido.id_pedido)} className={botonPrimario}>
+                      Confirmar
+                    </button>
+                  </>
+                )}
+
+                {pedido.estado === 'confirmado' && (
+                  <button onClick={() => manejarCambioEstado(pedido.id_pedido, 'listo')} className={botonAccion}>
+                    Marcar como listo
+                  </button>
+                )}
+
+                {pedido.estado === 'listo' && (
+                  <>
+                    <button onClick={() => manejarCambioEstado(pedido.id_pedido, 'entregado')} className={botonAccion}>
+                      Marcar como entregado
+                    </button>
+                    <button onClick={() => manejarNoRetirado(pedido.id_pedido)} className={botonAccion}>
+                      Marcar como no retirado
+                    </button>
+                  </>
+                )}
+
+                {(pedido.estado === 'pendiente' || pedido.estado === 'confirmado') && (
+                  <button
+                    onClick={() => manejarCancelar(pedido.id_pedido)}
+                    className="text-sm px-3 py-1.5 rounded-md border border-red-600 text-red-600 hover:bg-red-600 hover:text-white transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      </>
+    )}
+
+    {pestana === 'deudas' && (
+      <>
+        <h3 className="text-lg font-medium text-gray-700 mb-3">Deudas</h3>
+      {deudas.length === 0 ? (
+        <p className="text-gray-500">No hay deudas registradas.</p>
+      ) : (
+        <div className="space-y-2">
+          {deudas.map((deuda) => (
+            <div key={deuda.id_deuda} className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm flex justify-between items-center">
+              <span className="text-sm text-gray-700">
+                {deuda.nombre} {deuda.apellido} ({deuda.email}) — Pedido #{deuda.id_pedido} — <span className="font-medium">${deuda.monto}</span>
+              </span>
+              <div className="flex items-center gap-2">
+                <span className={`text-xs font-medium px-2 py-1 rounded-full ${coloresDeuda[deuda.estado] || 'bg-gray-100 text-gray-700'}`}>
+                  {formatearEstadoDeuda(deuda.estado)}
+                </span>
+                {deuda.estado === 'pendiente' && (
+                  <button onClick={() => manejarMarcarPagada(deuda.id_deuda)} className={botonAccion}>
+                    Marcar como pagada
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      </>
+    )}
+
+    {pestana === 'administradores' && (
+      <>
+        <div className="mb-8">
         <button
           onClick={() => setMostrarFormAdmin(!mostrarFormAdmin)}
           className="text-sm px-3 py-1.5 rounded-md border border-gray-300 text-gray-700 hover:border-red-600 hover:text-red-600 transition-colors"
@@ -244,25 +389,6 @@ async function manejarGuardarLimite(e) {
           </form>
         )}
       </div>
-
-        <div className="mb-8">
-        <h3 className="text-lg font-medium text-gray-700 mb-3">Límite de deuda por cliente</h3>
-        <form onSubmit={manejarGuardarLimite} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm flex flex-wrap items-center gap-3 max-w-md">
-          <span className="text-sm text-gray-600">Bloquear nuevos pedidos desde $</span>
-          <input
-            type="number"
-            min="0"
-            value={limiteInput}
-            onChange={(e) => setLimiteInput(e.target.value)}
-            required
-            className="w-28 px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-          />
-          <button type="submit" className={botonPrimario}>Guardar</button>
-          {mensajeLimite && <p className="w-full text-sm text-gray-600">{mensajeLimite}</p>}
-        </form>
-      </div>
-
-
         {admins.length > 0 && (
           <div className="mb-10">
             <h3 className="text-lg font-medium text-gray-700 mb-3">Administradores</h3>
@@ -329,120 +455,31 @@ async function manejarGuardarLimite(e) {
             </div>
           </div>
         )}
+      </>
+    )}
 
+    {pestana === 'configuracion' && (
+      <>
+        <div className="mb-8">
+        <h3 className="text-lg font-medium text-gray-700 mb-3">Límite de deuda por cliente</h3>
+        <form onSubmit={manejarGuardarLimite} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm flex flex-wrap items-center gap-3 max-w-md">
+          <span className="text-sm text-gray-600">Bloquear nuevos pedidos desde $</span>
+          <input
+            type="number"
+            min="0"
+            value={limiteInput}
+            onChange={(e) => setLimiteInput(e.target.value)}
+            required
+            className="w-28 px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+          />
+          <button type="submit" className={botonPrimario}>Guardar</button>
+          {mensajeLimite && <p className="w-full text-sm text-gray-600">{mensajeLimite}</p>}
+        </form>
+      </div>
+      </>
+    )}
+  </div>
 
-      <h3 className="text-lg font-medium text-gray-700 mb-3">Pedidos</h3>
-      {pedidos.length === 0 ? (
-        <p className="text-gray-500">No hay pedidos todavía.</p>
-      ) : (
-        <div className="space-y-3 mb-10">
-          {pedidos.map((pedido) => (
-            <div key={pedido.id_pedido} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-              <div className="flex justify-between items-start">
-                <div>
-                  <span className="font-medium text-gray-800">Pedido #{pedido.id_pedido}</span>
-                  <span className="text-gray-500 ml-2 text-sm">
-                    {pedido.nombre} {pedido.apellido} ({pedido.email})
-                  </span>
-                </div>
-                <span className={`text-xs font-medium px-2 py-1 rounded-full ${coloresEstado[pedido.estado] || 'bg-gray-100 text-gray-700'}`}>
-                  {formatearEstado(pedido.estado)}
-                </span>
-              </div>
-
-              <p className="text-sm text-gray-600 mt-1">
-                {formatearTipoTrabajo(pedido.tipo_trabajo)} — {pedido.cantidad_copias} copias
-                {pedido.precio && ` — $${pedido.precio}`}
-              </p>
-
-              {pedido.archivos && pedido.archivos.length > 0 && (
-                <div className="text-sm mt-2">
-                  {pedido.archivos.map((archivo) => (
-                    <a
-                      key={archivo.id_archivo}
-                      href={urlArchivo(archivo.ruta_archivo)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-red-600 hover:underline mr-3"
-                    >
-                      📄 {archivo.nombre_archivo}
-                    </a>
-                  ))}
-                </div>
-              )}
-
-              <div className="flex flex-wrap gap-2 mt-3">
-                {pedido.estado === 'pendiente' && (
-                  <>
-                    <input
-                      type="number"
-                      placeholder="Precio"
-                      onChange={(e) => setPrecios({ ...precios, [pedido.id_pedido]: e.target.value })}
-                      className="w-24 px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-                    />
-                    <button onClick={() => manejarConfirmar(pedido.id_pedido)} className={botonPrimario}>
-                      Confirmar
-                    </button>
-                  </>
-                )}
-
-                {pedido.estado === 'confirmado' && (
-                  <button onClick={() => manejarCambioEstado(pedido.id_pedido, 'listo')} className={botonAccion}>
-                    Marcar como listo
-                  </button>
-                )}
-
-                {pedido.estado === 'listo' && (
-                  <>
-                    <button onClick={() => manejarCambioEstado(pedido.id_pedido, 'entregado')} className={botonAccion}>
-                      Marcar como entregado
-                    </button>
-                    <button onClick={() => manejarNoRetirado(pedido.id_pedido)} className={botonAccion}>
-                      Marcar como no retirado
-                    </button>
-                  </>
-                )}
-
-                {(pedido.estado === 'pendiente' || pedido.estado === 'confirmado') && (
-                  <button
-                    onClick={() => manejarCancelar(pedido.id_pedido)}
-                    className="text-sm px-3 py-1.5 rounded-md border border-red-600 text-red-600 hover:bg-red-600 hover:text-white transition-colors"
-                  >
-                    Cancelar
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <h3 className="text-lg font-medium text-gray-700 mb-3">Deudas</h3>
-      {deudas.length === 0 ? (
-        <p className="text-gray-500">No hay deudas registradas.</p>
-      ) : (
-        <div className="space-y-2">
-          {deudas.map((deuda) => (
-            <div key={deuda.id_deuda} className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm flex justify-between items-center">
-              <span className="text-sm text-gray-700">
-                {deuda.nombre} {deuda.apellido} ({deuda.email}) — Pedido #{deuda.id_pedido} — <span className="font-medium">${deuda.monto}</span>
-              </span>
-              <div className="flex items-center gap-2">
-                <span className={`text-xs font-medium px-2 py-1 rounded-full ${coloresDeuda[deuda.estado] || 'bg-gray-100 text-gray-700'}`}>
-                  {formatearEstadoDeuda(deuda.estado)}
-                </span>
-                {deuda.estado === 'pendiente' && (
-                  <button onClick={() => manejarMarcarPagada(deuda.id_deuda)} className={botonAccion}>
-                    Marcar como pagada
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+);
 }
-
 export default PanelAdmin;
