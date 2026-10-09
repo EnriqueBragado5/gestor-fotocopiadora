@@ -61,4 +61,23 @@ async function contarTodos() {
   return rows[0].total;
 }
 
-module.exports = { crear, buscarPorUsuario, buscarTodos, buscarPorId, confirmar, actualizarEstado, buscarTodosPaginado, contarTodos};
+async function buscarPorUsuarioPaginado(id_usuario, limite, offset) {
+  const [rows] = await db.query(
+    `SELECT * FROM Pedidos
+     WHERE id_usuario = ?
+     ORDER BY fecha_pedido DESC, id_pedido DESC
+     LIMIT ? OFFSET ?`,
+    [id_usuario, limite, offset]
+  );
+  return rows;
+}
+
+async function contarPorUsuario(id_usuario) {
+  const [rows] = await db.query(
+    'SELECT COUNT(*) AS total FROM Pedidos WHERE id_usuario = ?',
+    [id_usuario]
+  );
+  return rows[0].total;
+}
+
+module.exports = { crear, buscarPorUsuario, buscarTodos, buscarPorId, confirmar, actualizarEstado, buscarTodosPaginado, contarTodos, buscarPorUsuarioPaginado, contarPorUsuario };

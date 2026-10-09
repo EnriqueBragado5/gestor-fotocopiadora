@@ -53,7 +53,14 @@ async function crear(req, res) {
 async function misPedidos(req, res) {
   try {
     const id_usuario = req.usuario.id;
-    const pedidos = await pedidoModel.buscarPorUsuario(id_usuario);
+    const pagina = Math.max(parseInt(req.query.pagina) || 1, 1);
+    const limite = Math.min(Math.max(parseInt(req.query.limite) || 10, 1), 50);
+    const offset = (pagina - 1) * limite;
+
+    const [pedidos, total] = await Promise.all([
+      pedidoModel.buscarPorUsuarioPaginado(id_usuario, limite, offset),
+      pedidoModel.contarPorUsuario(id_usuario)
+    ]);
 
     const pedidosConArchivos = await Promise.all(
       pedidos.map(async (pedido) => {
@@ -62,7 +69,12 @@ async function misPedidos(req, res) {
       })
     );
 
-    res.json(pedidosConArchivos);
+    res.json({
+      pedidos: pedidosConArchivos,
+      total,
+      pagina,
+      totalPaginas: Math.max(Math.ceil(total / limite), 1)
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ mensaje: 'Error al obtener los pedidos', error: error.message });

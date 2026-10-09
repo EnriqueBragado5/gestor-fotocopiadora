@@ -1,10 +1,5 @@
 import api from './api';
 
-export async function obtenerMisPedidos() {
-  const respuesta = await api.get('/pedidos/mis-pedidos');
-  return respuesta.data;
-}
-
 export async function obtenerTodosLosPedidos(pagina = 1, limite = 10) {
   const respuesta = await api.get('/pedidos', { params: { pagina, limite } });
   return respuesta.data;
@@ -34,5 +29,10 @@ export async function cancelarPedido(id) {
 
 export async function marcarNoRetirado(id) {
   const respuesta = await api.put(`/deudas/pedidos/${id}/no-retirado`);
+  return respuesta.data;
+}
+
+export async function obtenerMisPedidos(pagina = 1, limite = 10) {
+  const respuesta = await api.get('/pedidos/mis-pedidos', { params: { pagina, limite } });
   return respuesta.data;
 }

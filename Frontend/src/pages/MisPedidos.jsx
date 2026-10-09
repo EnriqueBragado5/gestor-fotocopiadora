@@ -16,21 +16,24 @@ function MisPedidos() {
   const [pedidos, setPedidos] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
+  const [pagina, setPagina] = useState(1);
+  const [totalPaginas, setTotalPaginas] = useState(1);
 
   async function cargarPedidos() {
-    try {
-      const datos = await obtenerMisPedidos();
-      setPedidos(datos);
-    } catch (err) {
-      setError('No se pudieron cargar los pedidos');
-    } finally {
-      setCargando(false);
-    }
+  try {
+    const datos = await obtenerMisPedidos(pagina);
+    setPedidos(datos.pedidos);
+    setTotalPaginas(datos.totalPaginas);
+  } catch (err) {
+    setError('No se pudieron cargar los pedidos');
+  } finally {
+    setCargando(false);
   }
+}
 
   useEffect(() => {
-    cargarPedidos();
-  }, []);
+  cargarPedidos();
+}, [pagina]);
 
   async function manejarCancelar(id) {
     const confirmar = window.confirm('¿Seguro que querés cancelar este pedido?');
@@ -110,6 +113,24 @@ function MisPedidos() {
           ))}
         </div>
       )}
+
+      <div className="flex justify-center items-center gap-3 mt-6">
+        <button
+          onClick={() => setPagina(pagina - 1)}
+          disabled={pagina === 1}
+          className="text-sm px-3 py-1.5 rounded-md border border-gray-300 text-gray-700 hover:border-red-600 hover:text-red-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          Anterior
+        </button>
+        <span className="text-sm text-gray-600">Página {pagina} de {totalPaginas}</span>
+        <button
+          onClick={() => setPagina(pagina + 1)}
+          disabled={pagina >= totalPaginas}
+          className="text-sm px-3 py-1.5 rounded-md border border-gray-300 text-gray-700 hover:border-red-600 hover:text-red-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          Siguiente
+        </button>
+      </div>
     </div>
   );
 }
