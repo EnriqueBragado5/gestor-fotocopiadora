@@ -37,16 +37,19 @@ function PanelAdmin() {
   const [limiteInput, setLimiteInput] = useState('');
   const [mensajeLimite, setMensajeLimite] = useState('');
   const [pestana, setPestana] = useState('pedidos');
+  const [pagina, setPagina] = useState(1);
+  const [totalPaginas, setTotalPaginas] = useState(1);
   
   async function cargarDatos() {
   try {
     const [datosPedidos, datosDeudas, datosAdmins, datosLimite] = await Promise.all([
-      obtenerTodosLosPedidos(),
+      obtenerTodosLosPedidos(pagina),
       obtenerTodasLasDeudas(),
       obtenerAdmins(),
       obtenerLimite()
     ]);
-    setPedidos(datosPedidos);
+    setPedidos(datosPedidos.pedidos);
+    setTotalPaginas(datosPedidos.totalPaginas);
     setDeudas(datosDeudas);
     setAdmins(datosAdmins);
     setLimiteInput(datosLimite.limite_deuda);
@@ -57,9 +60,10 @@ function PanelAdmin() {
   }
 }
 
-  useEffect(() => {
-    cargarDatos();
-  }, []);
+useEffect(() => {
+  cargarDatos();
+}, [pagina]);
+
 
   async function manejarConfirmar(id) {
     const precio = precios[id];
@@ -296,6 +300,24 @@ async function manejarGuardarLimite(e) {
           ))}
         </div>
       )}
+
+      <div className="flex justify-center items-center gap-3 mt-4">
+        <button
+          onClick={() => setPagina(pagina - 1)}
+          disabled={pagina === 1}
+          className={`${botonAccion} disabled:opacity-40 disabled:cursor-not-allowed`}
+        >
+          Anterior
+        </button>
+        <span className="text-sm text-gray-600">Página {pagina} de {totalPaginas}</span>
+        <button
+          onClick={() => setPagina(pagina + 1)}
+          disabled={pagina >= totalPaginas}
+          className={`${botonAccion} disabled:opacity-40 disabled:cursor-not-allowed`}
+        >
+          Siguiente
+        </button>
+      </div>
       </>
     )}
 

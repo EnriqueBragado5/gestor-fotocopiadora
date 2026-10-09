@@ -5,8 +5,8 @@ export async function obtenerMisPedidos() {
   return respuesta.data;
 }
 
-export async function obtenerTodosLosPedidos() {
-  const respuesta = await api.get('/pedidos');
+export async function obtenerTodosLosPedidos(pagina = 1, limite = 10) {
+  const respuesta = await api.get('/pedidos', { params: { pagina, limite } });
   return respuesta.data;
 }
 

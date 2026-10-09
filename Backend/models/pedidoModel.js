@@ -44,4 +44,21 @@ async function actualizarEstado(id_pedido, estado) {
   await db.query('UPDATE Pedidos SET estado = ? WHERE id_pedido = ?', [estado, id_pedido]);
 }
 
-module.exports = { crear, buscarPorUsuario, buscarTodos, buscarPorId, confirmar, actualizarEstado };
+async function buscarTodosPaginado(limite, offset) {
+  const [rows] = await db.query(
+    `SELECT p.*, u.nombre, u.apellido, u.email
+     FROM Pedidos p
+     JOIN Usuarios u ON p.id_usuario = u.id_usuario
+     ORDER BY p.fecha_pedido DESC, p.id_pedido DESC
+     LIMIT ? OFFSET ?`,
+    [limite, offset]
+  );
+  return rows;
+}
+
+async function contarTodos() {
+  const [rows] = await db.query('SELECT COUNT(*) AS total FROM Pedidos');
+  return rows[0].total;
+}
+
+module.exports = { crear, buscarPorUsuario, buscarTodos, buscarPorId, confirmar, actualizarEstado, buscarTodosPaginado, contarTodos};
