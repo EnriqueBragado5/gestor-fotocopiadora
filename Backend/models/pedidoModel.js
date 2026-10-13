@@ -44,20 +44,29 @@ async function actualizarEstado(id_pedido, estado) {
   await db.query('UPDATE Pedidos SET estado = ? WHERE id_pedido = ?', [estado, id_pedido]);
 }
 
-async function buscarTodosPaginado(limite, offset) {
+async function buscarTodosPaginado(limite, offset, filtros = {}) {
+  const { where, valores } = armarFiltros(filtros);
   const [rows] = await db.query(
     `SELECT p.*, u.nombre, u.apellido, u.email
      FROM Pedidos p
      JOIN Usuarios u ON p.id_usuario = u.id_usuario
+     ${where}
      ORDER BY p.fecha_pedido DESC, p.id_pedido DESC
      LIMIT ? OFFSET ?`,
-    [limite, offset]
+    [...valores, limite, offset]
   );
   return rows;
 }
 
-async function contarTodos() {
-  const [rows] = await db.query('SELECT COUNT(*) AS total FROM Pedidos');
+async function contarTodos(filtros = {}) {
+  const { where, valores } = armarFiltros(filtros);
+  const [rows] = await db.query(
+    `SELECT COUNT(*) AS total
+     FROM Pedidos p
+     JOIN Usuarios u ON p.id_usuario = u.id_usuario
+     ${where}`,
+    valores
+  );
   return rows[0].total;
 }
 
@@ -80,4 +89,23 @@ async function contarPorUsuario(id_usuario) {
   return rows[0].total;
 }
 
-module.exports = { crear, buscarPorUsuario, buscarTodos, buscarPorId, confirmar, actualizarEstado, buscarTodosPaginado, contarTodos, buscarPorUsuarioPaginado, contarPorUsuario };
+function armarFiltros({ busqueda, estado }) {
+  const condiciones = [];
+  const valores = [];
+
+  if (busqueda) {
+    const patron = `%${busqueda}%`;
+    condiciones.push('(u.nombre LIKE ? OR u.apellido LIKE ? OR u.email LIKE ? OR p.id_pedido = ?)');
+    valores.push(patron, patron, patron, Number(busqueda) || 0);
+  }
+
+  if (estado) {
+    condiciones.push('p.estado = ?');
+    valores.push(estado);
+  }
+
+  const where = condiciones.length ? 'WHERE ' + condiciones.join(' AND ') : '';
+  return { where, valores };
+}
+
+module.exports = { crear, buscarPorUsuario, buscarTodos, buscarPorId, confirmar, actualizarEstado, buscarTodosPaginado, contarTodos, buscarPorUsuarioPaginado, contarPorUsuario, armarFiltros };

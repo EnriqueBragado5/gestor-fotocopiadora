@@ -1,10 +1,5 @@
 import api from './api';
 
-export async function obtenerTodosLosPedidos(pagina = 1, limite = 10) {
-  const respuesta = await api.get('/pedidos', { params: { pagina, limite } });
-  return respuesta.data;
-}
-
 export async function crearPedido(formData) {
   const respuesta = await api.post('/pedidos', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
@@ -34,5 +29,10 @@ export async function marcarNoRetirado(id) {
 
 export async function obtenerMisPedidos(pagina = 1, limite = 10) {
   const respuesta = await api.get('/pedidos/mis-pedidos', { params: { pagina, limite } });
+  return respuesta.data;
+}
+
+export async function obtenerTodosLosPedidos(pagina = 1, limite = 10, filtros = {}) {
+  const respuesta = await api.get('/pedidos', { params: { pagina, limite, ...filtros } });
   return respuesta.data;
 }

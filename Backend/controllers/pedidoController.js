@@ -87,9 +87,14 @@ async function todos(req, res) {
     const limite = Math.min(Math.max(parseInt(req.query.limite) || 10, 1), 50);
     const offset = (pagina - 1) * limite;
 
+    const filtros = {
+      busqueda: (req.query.busqueda || '').trim(),
+      estado: req.query.estado || ''
+    };
+
     const [pedidos, total] = await Promise.all([
-      pedidoModel.buscarTodosPaginado(limite, offset),
-      pedidoModel.contarTodos()
+      pedidoModel.buscarTodosPaginado(limite, offset, filtros),
+      pedidoModel.contarTodos(filtros)
     ]);
 
     const pedidosConArchivos = await Promise.all(
