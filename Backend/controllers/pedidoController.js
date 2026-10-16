@@ -12,6 +12,11 @@ async function crear(req, res) {
       return res.status(400).json({ mensaje: 'Faltan datos obligatorios del pedido' });
     }
 
+    const copias = Number(cantidad_copias);
+    if (!Number.isInteger(copias) || copias < 1) {
+      return res.status(400).json({ mensaje: 'La cantidad de copias debe ser un número entero mayor a 0' });
+    }
+
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ mensaje: 'Debe adjuntar al menos un archivo PDF' });
     }
@@ -25,14 +30,14 @@ async function crear(req, res) {
     }
 
     const id_pedido = await pedidoModel.crear({
-      id_usuario,
-      tipo_trabajo,
-      tamano_hoja,
-      color,
-      faz,
-      cantidad_copias,
-      descripcion
-    });
+    id_usuario,
+    tipo_trabajo,
+    tamano_hoja,
+    color,
+    faz,
+    cantidad_copias: copias,
+    descripcion
+});
 
     for (const file of req.files) {
   const nombreCorregido = Buffer.from(file.originalname, 'latin1').toString('utf8');
@@ -121,6 +126,10 @@ async function confirmar(req, res) {
     const { id } = req.params;
     const { precio } = req.body;
 
+    const valorPrecio = Number(precio);
+    if (!Number.isFinite(valorPrecio) || valorPrecio <= 0) {
+      return res.status(400).json({ mensaje: 'El precio debe ser un número mayor a 0' });
+    }
 
     if (!precio || Number(precio) <= 0) {
       return res.status(400).json({ mensaje: 'Debe poner un número mayor a 0' });
@@ -129,6 +138,10 @@ async function confirmar(req, res) {
     const pedido = await pedidoModel.buscarPorId(id);
     if (!pedido) {
       return res.status(404).json({ mensaje: 'Pedido no encontrado' });
+    }
+
+    if (pedido.estado !== 'pendiente') {
+      return res.status(409).json({ mensaje: `Solo se puede confirmar un pedido pendiente (estado actual: "${pedido.estado}")` });
     }
 
     await pedidoModel.confirmar(id, precio);
@@ -154,6 +167,11 @@ async function actualizarEstado(req, res) {
       return res.status(404).json({ mensaje: 'Pedido no encontrado' });
     }
 
+    const estadoPrevioRequerido = { listo: 'confirmado', entregado: 'listo' };
+    if (pedido.estado !== estadoPrevioRequerido[estado]) {
+      return res.status(409).json({ mensaje: `No se puede pasar de "${pedido.estado}" a "${estado}"` });
+    }
+
     await pedidoModel.actualizarEstado(id, estado);
     res.json({ mensaje: `Pedido actualizado a estado: ${estado}` });
   } catch (error) {
@@ -174,6 +192,11 @@ async function cancelar(req, res) {
     if (req.usuario.rol !== 'admin' && pedido.id_usuario !== req.usuario.id) {
       return res.status(403).json({ mensaje: 'No tiene permiso para cancelar este pedido' });
     }
+
+    const estadosCancelables = ['pendiente', 'confirmado', 'listo'];
+      if (!estadosCancelables.includes(pedido.estado)) {
+        return res.status(409).json({ mensaje: `No se puede cancelar un pedido en estado "${pedido.estado}"` });
+      }
 
     await pedidoModel.actualizarEstado(id, 'cancelado');
     res.json({ mensaje: 'Pedido cancelado correctamente' });

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { obtenerTodosLosPedidos, confirmarPedido, actualizarEstadoPedido, cancelarPedido, marcarNoRetirado } from '../services/pedidoService';
 import { obtenerTodasLasDeudas, marcarDeudaPagada } from '../services/deudaService';
-import { formatearEstado, formatearTipoTrabajo, formatearEstadoDeuda, urlArchivo, estadosLegibles } from '../utils/formato';
+import { formatearEstado, formatearTipoTrabajo, formatearEstadoDeuda, formatearColor, formatearTamano, formatearFaz, urlArchivo, estadosLegibles } from '../utils/formato';
 import { crearAdmin, obtenerAdmins, actualizarAdmin, cambiarEstadoAdmin } from '../services/usuarioService';
 import { obtenerLimite, actualizarLimite } from '../services/configuracionService';
 import { useAuth } from '../context/AuthContext';
@@ -94,7 +94,7 @@ function PanelAdmin() {
       await confirmarPedido(id, precio);
       cargarDatos();
     } catch (err) {
-      alert('Error al confirmar el pedido');
+      alert(err.response?.data?.mensaje || 'Error al confirmar el pedido');
     }
   }
 
@@ -103,7 +103,7 @@ function PanelAdmin() {
       await actualizarEstadoPedido(id, nuevoEstado);
       cargarDatos();
     } catch (err) {
-      alert('Error al actualizar el estado');
+      alert(err.response?.data?.mensaje || 'Error al actualizar el estado');
     }
   }
 
@@ -112,7 +112,7 @@ function PanelAdmin() {
       await cancelarPedido(id);
       cargarDatos();
     } catch (err) {
-      alert('Error al cancelar el pedido');
+      alert(err.response?.data?.mensaje || 'Error al cancelar el pedido');
     }
   }
 
@@ -123,7 +123,7 @@ function PanelAdmin() {
       await marcarNoRetirado(id);
       cargarDatos();
     } catch (err) {
-      alert('Error al marcar el pedido como no retirado');
+      alert(err.response?.data?.mensaje || 'Error al marcar el pedido como no retirado');
     }
   }
 
@@ -285,6 +285,16 @@ function PanelAdmin() {
                     {formatearTipoTrabajo(pedido.tipo_trabajo)} — {pedido.cantidad_copias} copias
                     {pedido.precio && ` — $${pedido.precio}`}
                   </p>
+
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Hoja {formatearTamano(pedido.tamano_hoja)} · {formatearColor(pedido.color)} · Faz {formatearFaz(pedido.faz).toLowerCase()}
+                  </p>
+
+                  {pedido.descripcion && (
+                    <p className="text-sm text-gray-700 bg-gray-50 border border-gray-100 rounded-md px-3 py-2 mt-2 break-words">
+                      <span className="font-medium">Nota del cliente:</span> {pedido.descripcion}
+                    </p>
+                  )}
 
                   {pedido.archivos && pedido.archivos.length > 0 && (
                     <div className="text-sm mt-2">

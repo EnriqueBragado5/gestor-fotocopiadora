@@ -52,3 +52,23 @@ export function formatearFecha(fechaISO) {
     year: 'numeric'
   });
 }
+
+export const tamanosLegibles = {
+  A4: 'A4',
+  A3: 'A3',
+  oficio: 'Oficio',
+  carta: 'Carta'
+};
+
+export const fazLegible = {
+  simple: 'Simple',
+  doble: 'Doble'
+};
+
+export function formatearTamano(tamano) {
+  return tamanosLegibles[tamano] || tamano;
+}
+
+export function formatearFaz(faz) {
+  return fazLegible[faz] || faz;
+}
