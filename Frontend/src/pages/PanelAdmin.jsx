@@ -85,18 +85,19 @@ function PanelAdmin() {
   }
 
   async function manejarConfirmar(id) {
-    const precio = precios[id];
-    if (!precio || Number(precio) <= 0) {
-      alert('Ingresá un precio mayor a 0 antes de confirmar');
-      return;
-    }
-    try {
-      await confirmarPedido(id, precio);
-      cargarDatos();
-    } catch (err) {
-      alert(err.response?.data?.mensaje || 'Error al confirmar el pedido');
-    }
+  const precio = precios[id];
+  if (!precio || Number(precio) <= 0) {
+    alert('Ingresá un precio mayor a 0 antes de confirmar');
+    return;
   }
+  try {
+    await confirmarPedido(id, precio);
+    cargarDatos();
+  } catch (err) {
+    alert(err.response?.data?.mensaje || 'Error al confirmar el pedido');
+    cargarDatos();
+  }
+}
 
   async function manejarCambioEstado(id, nuevoEstado) {
     try {
@@ -104,6 +105,7 @@ function PanelAdmin() {
       cargarDatos();
     } catch (err) {
       alert(err.response?.data?.mensaje || 'Error al actualizar el estado');
+      cargarDatos();
     }
   }
 
@@ -113,6 +115,7 @@ function PanelAdmin() {
       cargarDatos();
     } catch (err) {
       alert(err.response?.data?.mensaje || 'Error al cancelar el pedido');
+      cargarDatos();
     }
   }
 
@@ -124,6 +127,7 @@ function PanelAdmin() {
       cargarDatos();
     } catch (err) {
       alert(err.response?.data?.mensaje || 'Error al marcar el pedido como no retirado');
+      cargarDatos();
     }
   }
 
