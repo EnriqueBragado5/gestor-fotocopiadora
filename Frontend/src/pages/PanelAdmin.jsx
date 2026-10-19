@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { obtenerTodosLosPedidos, confirmarPedido, actualizarEstadoPedido, cancelarPedido, marcarNoRetirado } from '../services/pedidoService';
 import { obtenerTodasLasDeudas, marcarDeudaPagada } from '../services/deudaService';
-import { formatearEstado, formatearTipoTrabajo, formatearEstadoDeuda, formatearColor, formatearTamano, formatearFaz, urlArchivo, estadosLegibles } from '../utils/formato';
+import { formatearEstado, formatearTipoTrabajo, formatearEstadoDeuda, formatearColor, formatearTamano, formatearFaz, urlArchivo, estadosLegibles, formatearFecha, formatearFechaHora } from '../utils/formato';
 import { crearAdmin, obtenerAdmins, actualizarAdmin, cambiarEstadoAdmin } from '../services/usuarioService';
 import { obtenerLimite, actualizarLimite } from '../services/configuracionService';
 import { useAuth } from '../context/AuthContext';
@@ -85,19 +85,19 @@ function PanelAdmin() {
   }
 
   async function manejarConfirmar(id) {
-  const precio = precios[id];
-  if (!precio || Number(precio) <= 0) {
-    alert('Ingresá un precio mayor a 0 antes de confirmar');
-    return;
+    const precio = precios[id];
+    if (!precio || Number(precio) <= 0) {
+      alert('Ingresá un precio mayor a 0 antes de confirmar');
+      return;
+    }
+    try {
+      await confirmarPedido(id, precio);
+      cargarDatos();
+    } catch (err) {
+      alert(err.response?.data?.mensaje || 'Error al confirmar el pedido');
+      cargarDatos();
+    }
   }
-  try {
-    await confirmarPedido(id, precio);
-    cargarDatos();
-  } catch (err) {
-    alert(err.response?.data?.mensaje || 'Error al confirmar el pedido');
-    cargarDatos();
-  }
-}
 
   async function manejarCambioEstado(id, nuevoEstado) {
     try {
@@ -275,10 +275,15 @@ function PanelAdmin() {
                 <div key={pedido.id_pedido} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
                   <div className="flex justify-between items-start">
                     <div>
-                      <span className="font-medium text-gray-800">Pedido #{pedido.id_pedido}</span>
-                      <span className="text-gray-500 ml-2 text-sm">
-                        {pedido.nombre} {pedido.apellido} ({pedido.email})
-                      </span>
+                      <div>
+                        <span className="font-medium text-gray-800">Pedido #{pedido.id_pedido}</span>
+                        <span className="text-gray-500 ml-2 text-sm">
+                          {pedido.nombre} {pedido.apellido} ({pedido.email})
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        Realizado el {formatearFechaHora(pedido.fecha_pedido)}
+                      </p>
                     </div>
                     <span className={`text-xs font-medium px-2 py-1 rounded-full ${coloresEstado[pedido.estado] || 'bg-gray-100 text-gray-700'}`}>
                       {formatearEstado(pedido.estado)}
@@ -389,9 +394,14 @@ function PanelAdmin() {
             <div className="space-y-2">
               {deudas.map((deuda) => (
                 <div key={deuda.id_deuda} className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm flex justify-between items-center">
-                  <span className="text-sm text-gray-700">
-                    {deuda.nombre} {deuda.apellido} ({deuda.email}) — Pedido #{deuda.id_pedido} — <span className="font-medium">${deuda.monto}</span>
-                  </span>
+                  <div>
+                    <span className="text-sm text-gray-700">
+                      {deuda.nombre} {deuda.apellido} ({deuda.email}) — Pedido #{deuda.id_pedido} — <span className="font-medium">${deuda.monto}</span>
+                    </span>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      Desde el {formatearFecha(deuda.fecha)}
+                    </p>
+                  </div>
                   <div className="flex items-center gap-2">
                     <span className={`text-xs font-medium px-2 py-1 rounded-full ${coloresDeuda[deuda.estado] || 'bg-gray-100 text-gray-700'}`}>
                       {formatearEstadoDeuda(deuda.estado)}

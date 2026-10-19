@@ -72,3 +72,10 @@ export function formatearTamano(tamano) {
 export function formatearFaz(faz) {
   return fazLegible[faz] || faz;
 }
+
+export function formatearFechaHora(fechaISO) {
+  const fecha = new Date(fechaISO);
+  const dia = fecha.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const hora = fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false });
+  return `${dia} ${hora} hs`;
+}

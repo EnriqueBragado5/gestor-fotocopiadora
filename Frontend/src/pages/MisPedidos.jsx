@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { obtenerMisPedidos, cancelarPedido } from '../services/pedidoService';
 import { Link } from 'react-router-dom';
-import { formatearEstado, formatearTipoTrabajo, formatearColor, formatearTamano, formatearFaz, urlArchivo } from '../utils/formato';
+import { formatearEstado, formatearTipoTrabajo, formatearColor, formatearTamano, formatearFaz, urlArchivo, formatearFechaHora } from '../utils/formato';
 
 const coloresEstado = {
   pendiente: 'bg-yellow-100 text-yellow-800',
@@ -20,33 +20,33 @@ function MisPedidos() {
   const [totalPaginas, setTotalPaginas] = useState(1);
 
   async function cargarPedidos() {
-  try {
-    const datos = await obtenerMisPedidos(pagina);
-    setPedidos(datos.pedidos);
-    setTotalPaginas(datos.totalPaginas);
-  } catch (err) {
-    setError('No se pudieron cargar los pedidos');
-  } finally {
-    setCargando(false);
+    try {
+      const datos = await obtenerMisPedidos(pagina);
+      setPedidos(datos.pedidos);
+      setTotalPaginas(datos.totalPaginas);
+    } catch (err) {
+      setError('No se pudieron cargar los pedidos');
+    } finally {
+      setCargando(false);
+    }
   }
-}
 
   useEffect(() => {
-  cargarPedidos();
-}, [pagina]);
+    cargarPedidos();
+  }, [pagina]);
 
   async function manejarCancelar(id) {
-  const confirmar = window.confirm('¿Seguro que querés cancelar este pedido?');
-  if (!confirmar) return;
+    const confirmar = window.confirm('¿Seguro que querés cancelar este pedido?');
+    if (!confirmar) return;
 
-  try {
-    await cancelarPedido(id);
-    cargarPedidos();
-  } catch (err) {
-    alert(err.response?.data?.mensaje || 'Error al cancelar el pedido');
-    cargarPedidos();
+    try {
+      await cancelarPedido(id);
+      cargarPedidos();
+    } catch (err) {
+      alert(err.response?.data?.mensaje || 'Error al cancelar el pedido');
+      cargarPedidos();
+    }
   }
-}
 
   if (cargando) return <p className="text-center text-gray-500 mt-8">Cargando pedidos...</p>;
   if (error) return <p className="text-center text-red-600 mt-8">{error}</p>;
@@ -72,25 +72,31 @@ function MisPedidos() {
           {pedidos.map((pedido) => (
             <div key={pedido.id_pedido} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
               <div className="flex justify-between items-start">
-                <p className="text-xs text-gray-500 mt-1">
-                  Hoja {formatearTamano(pedido.tamano_hoja)} · {formatearColor(pedido.color)} · Faz {formatearFaz(pedido.faz).toLowerCase()}
-                </p>
-
-                {pedido.descripcion && (
-                  <p className="text-sm text-gray-700 mt-1 break-words">
-                    <span className="font-medium">Descripción:</span> {pedido.descripcion}
-                  </p>
-                )}
                 <div>
-                  <span className="font-medium text-gray-800">Pedido #{pedido.id_pedido}</span>
-                  <span className="text-gray-500 ml-2">
-                    {formatearTipoTrabajo(pedido.tipo_trabajo)} — {pedido.cantidad_copias} copias
-                  </span>
+                  <div>
+                    <span className="font-medium text-gray-800">Pedido #{pedido.id_pedido}</span>
+                    <span className="text-gray-500 ml-2">
+                      {formatearTipoTrabajo(pedido.tipo_trabajo)} — {pedido.cantidad_copias} copias
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Realizado el {formatearFechaHora(pedido.fecha_pedido)}
+                  </p>
                 </div>
                 <span className={`text-xs font-medium px-2 py-1 rounded-full ${coloresEstado[pedido.estado] || 'bg-gray-100 text-gray-700'}`}>
                   {formatearEstado(pedido.estado)}
                 </span>
               </div>
+
+              <p className="text-xs text-gray-500 mt-1">
+                Hoja {formatearTamano(pedido.tamano_hoja)} · {formatearColor(pedido.color)} · Faz {formatearFaz(pedido.faz).toLowerCase()}
+              </p>
+
+              {pedido.descripcion && (
+                <p className="text-sm text-gray-700 mt-1 break-words">
+                  <span className="font-medium">Descripción:</span> {pedido.descripcion}
+                </p>
+              )}
 
               {pedido.precio && (
                 <p className="text-sm text-gray-600 mt-1">Precio: ${pedido.precio}</p>
