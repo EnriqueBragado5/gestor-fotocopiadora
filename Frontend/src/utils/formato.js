@@ -79,3 +79,12 @@ export function formatearFechaHora(fechaISO) {
   const hora = fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false });
   return `${dia} ${hora} hs`;
 }
+
+export function formatearMoneda(valor) {
+  return Number(valor).toLocaleString('es-AR', {
+    style: 'currency',
+    currency: 'ARS',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2
+  });
+}

@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { obtenerTodosLosPedidos, confirmarPedido, actualizarEstadoPedido, cancelarPedido, marcarNoRetirado } from '../services/pedidoService';
 import { obtenerTodasLasDeudas, marcarDeudaPagada } from '../services/deudaService';
-import { formatearEstado, formatearTipoTrabajo, formatearEstadoDeuda, formatearColor, formatearTamano, formatearFaz, urlArchivo, estadosLegibles, formatearFecha, formatearFechaHora } from '../utils/formato';
+import { formatearEstado, formatearTipoTrabajo, formatearEstadoDeuda, formatearColor, formatearTamano, formatearFaz, urlArchivo, estadosLegibles, formatearFecha, formatearFechaHora, formatearMoneda } from '../utils/formato';
 import { crearAdmin, obtenerAdmins, actualizarAdmin, cambiarEstadoAdmin } from '../services/usuarioService';
 import { obtenerLimite, actualizarLimite } from '../services/configuracionService';
 import { useAuth } from '../context/AuthContext';
+import { obtenerResumen } from '../services/estadisticaService';
 
 const coloresEstado = {
   pendiente: 'bg-yellow-100 text-yellow-800',
@@ -47,19 +48,23 @@ function PanelAdmin() {
   const [limiteInput, setLimiteInput] = useState('');
   const [mensajeLimite, setMensajeLimite] = useState('');
 
+  const [resumen, setResumen] = useState(null);
+
   async function cargarDatos() {
     try {
-      const [datosPedidos, datosDeudas, datosAdmins, datosLimite] = await Promise.all([
-        obtenerTodosLosPedidos(pagina, 10, filtros),
-        obtenerTodasLasDeudas(),
-        obtenerAdmins(),
-        obtenerLimite()
-      ]);
+      const [datosPedidos, datosDeudas, datosAdmins, datosLimite, datosResumen] = await Promise.all([
+          obtenerTodosLosPedidos(pagina, 10, filtros),
+          obtenerTodasLasDeudas(),
+          obtenerAdmins(),
+          obtenerLimite(),
+          obtenerResumen()
+        ]);
       setPedidos(datosPedidos.pedidos);
       setTotalPaginas(datosPedidos.totalPaginas);
       setDeudas(datosDeudas);
       setAdmins(datosAdmins);
       setLimiteInput(datosLimite.limite_deuda);
+      setResumen(datosResumen);
     } catch (err) {
       setError('No se pudieron cargar los datos');
     } finally {
@@ -212,11 +217,21 @@ function PanelAdmin() {
   const inputForm = 'w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500';
 
   const pestanas = [
-    { id: 'pedidos', nombre: 'Pedidos' },
-    { id: 'deudas', nombre: 'Deudas' },
-    { id: 'administradores', nombre: 'Administradores' },
-    { id: 'configuracion', nombre: 'Configuración' }
+  { id: 'pedidos', nombre: 'Pedidos' },
+  { id: 'deudas', nombre: 'Deudas' },
+  { id: 'estadisticas', nombre: 'Estadísticas' },
+  { id: 'administradores', nombre: 'Administradores' },
+  { id: 'configuracion', nombre: 'Configuración' }
   ];
+
+  const tarjetas = resumen ? [
+  { titulo: 'Total de pedidos', valor: resumen.total_pedidos },
+  { titulo: 'Pedidos pendientes', valor: resumen.pedidos_pendientes },
+  { titulo: 'Ingresos cobrados', valor: formatearMoneda(resumen.ingresos_cobrados) },
+  { titulo: 'Deuda pendiente', valor: formatearMoneda(resumen.deuda_pendiente), rojo: true },
+  { titulo: 'Clientes registrados', valor: resumen.clientes_registrados }
+  ] : [];
+
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -528,6 +543,25 @@ function PanelAdmin() {
           </div>
         </>
       )}
+
+      {pestana === 'estadisticas' && (
+          <>
+            <h3 className="text-lg font-medium text-gray-700 mb-3">Estadísticas</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {tarjetas.map((t) => (
+                <div key={t.titulo} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                  <p className="text-sm text-gray-500">{t.titulo}</p>
+                  <p className={`text-2xl font-semibold mt-1 ${t.rojo ? 'text-red-600' : 'text-gray-800'}`}>
+                    {t.valor}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-gray-400 mt-3">
+              Los ingresos cobrados suman los pedidos entregados y las deudas ya pagadas.
+            </p>
+          </>
+        )}
     </div>
   );
 }

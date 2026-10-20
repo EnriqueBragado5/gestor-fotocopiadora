@@ -6,6 +6,7 @@ const usuarioRoutes = require('./routes/usuarioRoutes');
 const pedidoRoutes = require('./routes/pedidoRoutes');
 const deudaRoutes = require('./routes/deudaRoutes');
 const configuracionRoutes = require('./routes/configuracionRoutes');
+const estadisticasRoutes = require('./routes/estadisticasRoutes');
 
 const app = express();
 
@@ -17,6 +18,7 @@ app.use('/api/pedidos', pedidoRoutes);
 app.use('/api/deudas', deudaRoutes);
 app.use('/uploads', express.static('uploads'));
 app.use('/api/configuracion', configuracionRoutes);
+app.use('/api/estadisticas', estadisticasRoutes);
 
 app.get('/', (req, res) => {
   res.send('El servidor de la fotocopiadora está funcionando');
