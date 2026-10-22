@@ -20,6 +20,11 @@ async function crear(req, res) {
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ mensaje: 'Debe adjuntar al menos un archivo PDF' });
     }
+
+    if (descripcion && descripcion.length > 500) {
+      return res.status(400).json({ mensaje: 'La descripción no puede superar los 500 caracteres' });
+    }
+
     const deudaActual = await deudaModel.sumarDeudaPendiente(id_usuario);
     const limite = await configuracionModel.obtenerLimiteDeuda();
 

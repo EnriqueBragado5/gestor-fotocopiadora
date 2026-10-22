@@ -115,13 +115,15 @@ function CrearPedido() {
           <div>
             <label className={estiloLabel}>Descripción (opcional)</label>
             <textarea
-              name="descripcion"
-              value={formulario.descripcion}
-              onChange={manejarCambio}
-              placeholder="Ej: imprimir solo de la página 5 a la 12"
-              rows="3"
-              className={estiloInput}
-            />
+                name="descripcion"
+                value={formulario.descripcion}
+                onChange={manejarCambio}
+                placeholder="Ej: imprimir solo de la página 5 a la 12"
+                rows="3"
+                maxLength={500}
+                className={estiloInput}
+              />
+              <p className="text-xs text-gray-400 mt-1 text-right">{formulario.descripcion.length}/500</p>
           </div>
 
           <div>
