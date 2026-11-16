@@ -30,8 +30,21 @@ async function marcarNoRetirado(req, res) {
 
 async function todas(req, res) {
   try {
-    const deudas = await deudaModel.buscarTodas();
-    res.json(deudas);
+    const pagina = Math.max(parseInt(req.query.pagina) || 1, 1);
+    const limite = Math.min(Math.max(parseInt(req.query.limite) || 10, 1), 50);
+    const offset = (pagina - 1) * limite;
+
+    const [deudas, total] = await Promise.all([
+      deudaModel.buscarTodasPaginado(limite, offset),
+      deudaModel.contarTodas()
+    ]);
+
+    res.json({
+      deudas,
+      total,
+      pagina,
+      totalPaginas: Math.max(Math.ceil(total / limite), 1)
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ mensaje: 'Error al obtener las deudas', error: error.message });

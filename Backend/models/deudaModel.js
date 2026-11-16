@@ -8,14 +8,21 @@ async function crear({ id_usuario, id_pedido, monto }) {
   return resultado.insertId;
 }
 
-async function buscarTodas() {
+async function buscarTodasPaginado(limite, offset) {
   const [rows] = await db.query(
     `SELECT d.*, u.nombre, u.apellido, u.email
      FROM Deudas d
      JOIN Usuarios u ON d.id_usuario = u.id_usuario
-     ORDER BY d.fecha DESC`
+     ORDER BY d.fecha DESC, d.id_deuda DESC
+     LIMIT ? OFFSET ?`,
+    [limite, offset]
   );
   return rows;
+}
+
+async function contarTodas() {
+  const [rows] = await db.query('SELECT COUNT(*) AS total FROM Deudas');
+  return rows[0].total;
 }
 
 async function buscarPorUsuario(id_usuario) {
@@ -38,4 +45,4 @@ async function sumarDeudaPendiente(id_usuario) {
   return rows[0].total;
 }
 
-module.exports = { crear, buscarTodas, buscarPorUsuario, marcarComoPagada, sumarDeudaPendiente };
+module.exports = { crear, buscarTodasPaginado, contarTodas, buscarPorUsuario, marcarComoPagada, sumarDeudaPendiente };

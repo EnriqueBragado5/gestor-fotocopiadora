@@ -1,7 +1,7 @@
 import api from './api';
 
-export async function obtenerTodasLasDeudas() {
-  const respuesta = await api.get('/deudas');
+export async function obtenerTodasLasDeudas(pagina = 1, limite = 10) {
+  const respuesta = await api.get('/deudas', { params: { pagina, limite } });
   return respuesta.data;
 }
 

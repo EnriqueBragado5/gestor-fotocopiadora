@@ -50,31 +50,35 @@ function PanelAdmin() {
 
   const [resumen, setResumen] = useState(null);
 
+  const [paginaDeudas, setPaginaDeudas] = useState(1);
+  const [totalPaginasDeudas, setTotalPaginasDeudas] = useState(1);
+
   async function cargarDatos() {
-    try {
-      const [datosPedidos, datosDeudas, datosAdmins, datosLimite, datosResumen] = await Promise.all([
-          obtenerTodosLosPedidos(pagina, 10, filtros),
-          obtenerTodasLasDeudas(),
-          obtenerAdmins(),
-          obtenerLimite(),
-          obtenerResumen()
-        ]);
-      setPedidos(datosPedidos.pedidos);
-      setTotalPaginas(datosPedidos.totalPaginas);
-      setDeudas(datosDeudas);
-      setAdmins(datosAdmins);
-      setLimiteInput(datosLimite.limite_deuda);
-      setResumen(datosResumen);
-    } catch (err) {
-      setError('No se pudieron cargar los datos');
-    } finally {
-      setCargando(false);
-    }
+  try {
+    const [datosPedidos, datosDeudas, datosAdmins, datosLimite, datosResumen] = await Promise.all([
+      obtenerTodosLosPedidos(pagina, 10, filtros),
+      obtenerTodasLasDeudas(paginaDeudas, 10),
+      obtenerAdmins(),
+      obtenerLimite(),
+      obtenerResumen()
+    ]);
+    setPedidos(datosPedidos.pedidos);
+    setTotalPaginas(datosPedidos.totalPaginas);
+    setDeudas(datosDeudas.deudas);
+    setTotalPaginasDeudas(datosDeudas.totalPaginas);
+    setAdmins(datosAdmins);
+    setLimiteInput(datosLimite.limite_deuda);
+    setResumen(datosResumen);
+  } catch (err) {
+    setError('No se pudieron cargar los datos');
+  } finally {
+    setCargando(false);
   }
+}
 
   useEffect(() => {
     cargarDatos();
-  }, [pagina, filtros]);
+  }, [pagina, filtros, paginaDeudas]);
 
   function manejarBuscar(e) {
     e.preventDefault();
@@ -431,6 +435,23 @@ function PanelAdmin() {
               ))}
             </div>
           )}
+            <div className="flex justify-center items-center gap-3 mt-4">
+                <button
+                  onClick={() => setPaginaDeudas(paginaDeudas - 1)}
+                  disabled={paginaDeudas === 1}
+                  className={`${botonAccion} disabled:opacity-40 disabled:cursor-not-allowed`}
+                >
+                  Anterior
+                </button>
+                <span className="text-sm text-gray-600">Página {paginaDeudas} de {totalPaginasDeudas}</span>
+                <button
+                  onClick={() => setPaginaDeudas(paginaDeudas + 1)}
+                  disabled={paginaDeudas >= totalPaginasDeudas}
+                  className={`${botonAccion} disabled:opacity-40 disabled:cursor-not-allowed`}
+                >
+                  Siguiente
+                </button>
+              </div>
         </>
       )}
 
