@@ -53,6 +53,10 @@ function PanelAdmin() {
   const [paginaDeudas, setPaginaDeudas] = useState(1);
   const [totalPaginasDeudas, setTotalPaginasDeudas] = useState(1);
 
+  const [desdeInput, setDesdeInput] = useState('');
+  const [hastaInput, setHastaInput] = useState('');
+  const [rango, setRango] = useState({ desde: '', hasta: '' });
+
   async function cargarDatos() {
   try {
     const [datosPedidos, datosDeudas, datosAdmins, datosLimite, datosResumen] = await Promise.all([
@@ -60,7 +64,7 @@ function PanelAdmin() {
       obtenerTodasLasDeudas(paginaDeudas, 10),
       obtenerAdmins(),
       obtenerLimite(),
-      obtenerResumen()
+      obtenerResumen(rango.desde, rango.hasta)
     ]);
     setPedidos(datosPedidos.pedidos);
     setTotalPaginas(datosPedidos.totalPaginas);
@@ -78,7 +82,7 @@ function PanelAdmin() {
 
   useEffect(() => {
     cargarDatos();
-  }, [pagina, filtros, paginaDeudas]);
+  }, [pagina, filtros, paginaDeudas, rango]);
 
   function manejarBuscar(e) {
     e.preventDefault();
@@ -92,6 +96,22 @@ function PanelAdmin() {
     setPagina(1);
     setFiltros({ busqueda: '', estado: '' });
   }
+
+  function manejarFiltrarEstadisticas(e) {
+  e.preventDefault();
+  if (desdeInput && hastaInput && desdeInput > hastaInput) {
+    alert('La fecha "desde" no puede ser posterior a "hasta"');
+    return;
+  }
+  setRango({ desde: desdeInput, hasta: hastaInput });
+  }
+
+  function manejarLimpiarFechas() {
+    setDesdeInput('');
+    setHastaInput('');
+    setRango({ desde: '', hasta: '' });
+  }
+
 
   async function manejarConfirmar(id) {
     const precio = precios[id];
@@ -232,8 +252,8 @@ function PanelAdmin() {
   { titulo: 'Total de pedidos', valor: resumen.total_pedidos },
   { titulo: 'Pedidos pendientes', valor: resumen.pedidos_pendientes },
   { titulo: 'Ingresos cobrados', valor: formatearMoneda(resumen.ingresos_cobrados) },
-  { titulo: 'Deuda pendiente', valor: formatearMoneda(resumen.deuda_pendiente), rojo: true },
-  { titulo: 'Clientes registrados', valor: resumen.clientes_registrados }
+  { titulo: 'Deuda pendiente', valor: formatearMoneda(resumen.deuda_pendiente), rojo: true }
+  
   ] : [];
 
 
@@ -566,23 +586,53 @@ function PanelAdmin() {
       )}
 
       {pestana === 'estadisticas' && (
-          <>
-            <h3 className="text-lg font-medium text-gray-700 mb-3">Estadísticas</h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {tarjetas.map((t) => (
-                <div key={t.titulo} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                  <p className="text-sm text-gray-500">{t.titulo}</p>
-                  <p className={`text-2xl font-semibold mt-1 ${t.rojo ? 'text-red-600' : 'text-gray-800'}`}>
-                    {t.valor}
-                  </p>
-                </div>
-              ))}
+      <>
+        <h3 className="text-lg font-medium text-gray-700 mb-3">Estadísticas</h3>
+
+        <form onSubmit={manejarFiltrarEstadisticas} className="flex flex-wrap items-end gap-3 mb-4">
+          <label className="text-sm text-gray-600">
+            Desde
+            <input
+              type="date"
+              value={desdeInput}
+              onChange={(e) => setDesdeInput(e.target.value)}
+              className="block mt-1 px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+            />
+          </label>
+          <label className="text-sm text-gray-600">
+            Hasta
+            <input
+              type="date"
+              value={hastaInput}
+              onChange={(e) => setHastaInput(e.target.value)}
+              className="block mt-1 px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+            />
+          </label>
+          <button type="submit" className={botonPrimario}>Aplicar</button>
+          <button type="button" onClick={manejarLimpiarFechas} className={botonAccion}>Limpiar</button>
+        </form>
+
+        <p className="text-sm text-gray-500 mb-3">
+          {rango.desde || rango.hasta
+            ? `Período: ${rango.desde ? rango.desde.split('-').reverse().join('/') : 'el inicio'} al ${rango.hasta ? rango.hasta.split('-').reverse().join('/') : 'hoy'}`
+            : 'Período: todo el historial'}
+        </p>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {tarjetas.map((t) => (
+            <div key={t.titulo} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+              <p className="text-sm text-gray-500">{t.titulo}</p>
+              <p className={`text-2xl font-semibold mt-1 ${t.rojo ? 'text-red-600' : 'text-gray-800'}`}>
+                {t.valor}
+              </p>
             </div>
-            <p className="text-xs text-gray-400 mt-3">
-              Los ingresos cobrados suman los pedidos entregados y las deudas ya pagadas.
-            </p>
-          </>
-        )}
+          ))}
+        </div>
+        <p className="text-xs text-gray-400 mt-3">
+          Los pedidos se cuentan por fecha de pedido y las entregas por fecha de entrega. Las deudas se cuentan por la fecha en que se generaron. Los ingresos cobrados suman los pedidos entregados y las deudas ya pagadas.
+        </p>
+      </>
+)}
     </div>
   );
 }
