@@ -34,7 +34,10 @@ async function buscarPorUsuario(id_usuario) {
 }
 
 async function marcarComoPagada(id_deuda) {
-  await db.query(`UPDATE Deudas SET estado = 'pagada' WHERE id_deuda = ?`, [id_deuda]);
+  await db.query(
+    `UPDATE Deudas SET estado = 'pagada', fecha_pago = NOW() WHERE id_deuda = ? AND estado = 'pendiente'`,
+    [id_deuda]
+  );
 }
 
 async function sumarDeudaPendiente(id_usuario) {

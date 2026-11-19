@@ -629,7 +629,7 @@ function PanelAdmin() {
           ))}
         </div>
         <p className="text-xs text-gray-400 mt-3">
-          Los pedidos se cuentan por fecha de pedido y las entregas por fecha de entrega. Las deudas se cuentan por la fecha en que se generaron. Los ingresos cobrados suman los pedidos entregados y las deudas ya pagadas.
+          Los pedidos se cuentan por fecha de pedido y las entregas por fecha de entrega. Las deudas cobradas se cuentan por la fecha de pago y las pendientes por la fecha en que se generaron. Los ingresos cobrados suman los pedidos entregados y las deudas ya pagadas.
         </p>
       </>
 )}
